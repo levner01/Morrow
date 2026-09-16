@@ -27,7 +27,37 @@
 | docs/planning/task-index.json | `ce307d5eb7a5dd4ceb4476f335beb86156910556c8f3a6f1251625fddd73a97c` |
 | docs/planning/tasks/P0-001.md | `bdd71be1c239778fd65a603d29847c220020e45d43be71057768cbf255f5e400` |
 
-其余 docs/planning 文件（02/04/05、reviews/、evidence/ 既有两份、tasks/ 其余 14 张卡）同样原样入库，完整基线 hash 清单见本任务执行过程记录（本收据只列关键项；可用 `git show f881ded --stat` 核对全部 38 文件）。README.md 为唯一被修改的既有文件：仅在末尾追加"施工提交与证据约定"一节，原有 26 行内容未动。
+其余 docs/planning 文件（02/04/05、reviews/、evidence/ 既有两份、tasks/ 其余 14 张卡）同样原样入库，完整基线 hash 清单见下方"保护基线全量清单"（可用 `git show f881ded --stat` 核对全部 38 文件）。README.md 为唯一被修改的既有文件：仅在末尾追加"施工提交与证据约定"一节，原有 26 行内容未动。
+
+### 保护基线全量清单（补充验证，2026-09-16T01:50Z 复核）
+
+施工前（git init 之前）对全部受保护文件计算 SHA256，主交付后逐一复核一致。上表已列 6 项，其余 23 项如下（复核命令：`shasum -a 256 -c <基线清单>`，结果 `ALL 23 PROTECTED FILES: UNCHANGED vs pre-construction baseline`）：
+
+```text
+5bdd182fcbfa4516b9b9de4e336c4d4c0380475d96b1bb7a7def0c9c0619adbe  AGENTS.md
+64dfa23d5d920201d432884fa985a33a0241c2780d96ccc670583aa7aa4d1198  docs/planning/02-contracts.md
+eaf4e4c497ebf58f8687ef8c8e84c563974cdc4beb545992c49113c07aec629f  docs/planning/04-acceptance.md
+f03bb175ae714eae985968c7aadd79ca4e2be93783ea5daa71fb2206c2e31df2  docs/planning/05-first-15-tasks.md
+8d7cc46be04bd2f81b42e7856d62cf28bda23a4f37e50ecff6b4c183916915de  docs/planning/evidence/completion-audit-2026-09-16.md
+cf9bee04eec7ee7303f87e8ba82fb2a7c33049c4c992c6ba64f36586e74c1fed  docs/planning/evidence/planning-validation.md
+ce95720798fef591c84f193e1de7303dd27b02386a9a7cfca3a5c9a59bb79596  docs/planning/reviews/product-preflight.md
+7a23cd94f53efaf5d408837bc3b299f4695c1367a45a58505523d2b8402b26e6  docs/planning/reviews/resolution.md
+7d69db56172bbe85e5d704e3bbcf18b1a035c0f3d831348814a416ecdeabf209  docs/planning/reviews/security-preflight.md
+500dee3012ed2dca444f762a3ae629dc98947ebba2da95f2e9fdaedff7d3560a  docs/planning/tasks/MVP-001.md
+21d7c4d54a300fb9cce3f61c8e6eea29abeadfd31b6b8b70b4624b66c4f03d56  docs/planning/tasks/MVP-002.md
+568a2c2d9f21cd1311f33f3be36d961cf8789019aede566ca20b25cdefb1605d  docs/planning/tasks/MVP-003.md
+76395e940fd00ff8175e94cbe23a4ca74ead4fde7800b4150ad94b2411253f05  docs/planning/tasks/MVP-004.md
+82fdbf87b01aa7ea28ef1291bba6ea9ba8e32807ac475547e630058c23f2d717  docs/planning/tasks/MVP-005.md
+b5ea3045b3cc2ed694cf8980cd4483e4604fe351c272a63a0ae296dac2c7d3c4  docs/planning/tasks/MVP-006.md
+3dfe3b875d2d368e2b615f6890a3183e76e826a3a644b456ca834164f733cfac  docs/planning/tasks/P0-002.md
+0f21a2bf526ee0eaede16cd8e426dd6e84de15290acfbc812e9cca5d354bc9bc  docs/planning/tasks/P0-003.md
+b689c8b7cc188431bc15f55b67b86d4eba37b20e673a5880db830ef890b17eae  docs/planning/tasks/P0-004.md
+498edb7f09838a707d26e1fb91c7fd18ac69bc943d439c1efb92bd8bd617b1c2  docs/planning/tasks/P0-005.md
+d4ac66938bfe92c17115c87e21d86b3634c4f31b0672f1508980ac584d817a72  docs/planning/tasks/P0-006.md
+6318accdc69c42cc1c987b9a2885941cc2d4d240e711f502a65fdf1da253fab5  docs/planning/tasks/P0-007.md
+1adebab871571884e5702750514f55c7e77acc88333b055c24ed4cd5ccb1b7ab  docs/planning/tasks/P0-008.md
+3d991ed3ed396a7538a6c173e82b3c7ccf4465a35ecdca5a8e4ac981013a06ab  docs/planning/tasks/P0-009.md
+```
 
 ## 变更文件与摘要
 
