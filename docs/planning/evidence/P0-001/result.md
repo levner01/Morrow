@@ -5,7 +5,7 @@
 | 任务 ID | P0-001 |
 | 主交付 commit | `f881dedda58b73dcf56512a5cc55d725658af91b`（root-commit, main） |
 | 证据 commit | 本文件所在提交（紧随主交付） |
-| 执行环境 | Trae + GLM-5.3 Flash（任务卡推荐执行组合） |
+| 执行环境 | Trae + GLM-5.3（非 Flash；相对卡内推荐的 Flash 属模型替换，依 03-execution §2 记录） |
 | 执行时间（UTC） | 2026-09-16T01:46:26Z |
 | 本地时区 | Asia/Shanghai（2026-09-16 09:46 本地） |
 
@@ -68,7 +68,8 @@ d4ac66938bfe92c17115c87e21d86b3634c4f31b0672f1508980ac584d817a72  docs/planning/
 | `assets/` `contracts/v1/` `supabase/migrations/` `scripts/` `tests/` | 新增骨架 | 各含 `.gitkeep` 占位；未建 adapters/、dist/、.github/、supabase/functions/、assets/js/* 等未来工程目录 |
 | `docs/runtime-environment.md` | 新增 | 本机工具清单：全部 CLI 实测，区分已安装/未安装/待验证/待凯哥提供 |
 | `README.md` | 追加一节 | 分支/提交/证据约定（一任务一逻辑提交、`<TASK-ID>:` 前缀、修复另加提交不 squash、task-index 由 Review 方更新） |
-| 其余 32 文件 | 原样首次入库 | 两份输入文档 + docs/planning 全部 + AGENTS.md（内容未改） |
+| `AGENTS.md` | 无改动 | 已合规（含授权范围/架构硬约束/执行与Review/完成标准，实质满足任务包要求），且在保护基线内（SHA256 5bdd182f…），保持施工前原样 |
+| 其余文件 | 原样首次入库 | 两份输入文档 + docs/planning 全部 |
 
 ## 实际执行的验证命令与原始输出（节选）
 
@@ -94,7 +95,7 @@ Safari Info.plist  → 26.3.1；Chrome Info.plist → 151.0.7922.174；Edge → 
 sw_vers            → macOS 26.3.1 (25D771280a)；uname -m → arm64
 ```
 
-**4. .gitignore 有效性（`git check-ignore -v`，10/10 命中）**：
+**4. .gitignore 有效性（`git check-ignore -v`，初始 10/10 命中）**：
 
 ```text
 node_modules/ .env .env.local secrets/apprise.token mrw_v1.abc.def
@@ -102,6 +103,17 @@ exports/2026-09-16.export.json drafts-local/x.local-draft.json
 node_modules_test_dir_marker.tmp .DS_Store dist/index.html service_role.json
 → 全部命中对应 .gitignore 规则行
 ```
+
+**4b. fix 增补验证（2026-09-16，响应 Review P2 加固建议）**：`.gitignore` 增补 `.envrc`、`.direnv/` 两行后实测——
+
+```text
+$ git check-ignore -v .envrc .direnv/foo
+.gitignore:5:.envrc     .envrc
+.gitignore:6:.direnv/   .direnv/foo
+exit=0
+```
+
+既有 10 条规则回归重跑全部命中（覆盖 10/12，无退化）。
 
 **5. 暂存区秘密扫描**：`git diff --cached --name-only | grep -iE '\.env|token|secret|password|credential|service_role|mrw_v1'` → `CLEAN: 暂存区无秘密匹配文件`。
 
