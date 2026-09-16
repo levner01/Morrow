@@ -1,0 +1,10 @@
+{
+  "name": "morrow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "单用户、多端同步的个人生活工作台。M1 = Phase 0 + MVP；前端为静态单文件 HTML/CSS/JS（无构建链），唯一权威业务 Core 在 Supabase PostgreSQL 私有语义函数。",
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED"
+}
