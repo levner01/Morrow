@@ -131,10 +131,62 @@ node_modules_test_dir_marker.tmp .DS_Store dist/index.html service_role.json
 
 ## Review（由 Review 方填写，施工者不填）
 
-- Review 人 / 模型：＿＿＿
-- 结论：☐ PASS ☐ BLOCKED
-- 证据与意见：＿＿＿
-- task-index.json 更新：签核 PASS 后由 Review 方将 P0-001 标记完成（施工者未动）
+- Review 人 / 模型：WorkBuddy + DeepSeek V4.1 Flash
+- 结论：**BLOCKED**
+- 审查时间（UTC）：2026-09-16T02:21:29Z
+- 审查基线：`main` @ `c53edcc`，`git status --porcelain` 为空（干净工作区）
+- 独立性：审查者 DeepSeek V4.1 Flash ≠ 执行方 GLM-5.3，异模型成立；全部结论由审查方自行跑命令得出，未采信收据文字。
+
+### 逐项复验结果（6 条 + 模型记录问题）
+
+**1. 保护基线核验 — PASS**
+命令：`shasum -a 256`（收据 6 项关键文件 + 收据「保护基线全量清单」23 项，共 29 项全量复核）
+原始输出：`个人生活工作台 · 产品深度规划 V2.md` `c1dd596552929d60ad7c6997d60dff1253eee9d6d4b79230b17525e4c6e32882`；`Morrow-Codex工程前置分析包.md` `39e2518221beff8db0509a66fd58784e56335e15955b4300744f642ffc74a0a3`；`docs/planning/01-architecture.md` `e1efbf5e…c916`；`docs/planning/03-execution.md` `d1535121…693b`；`docs/planning/task-index.json` `ce307d5e…a97c`；`docs/planning/tasks/P0-001.md` `bdd71be1…e400`；23 项补充清单逐条一致。**29/29 全等，零不一致。** 覆盖要求达成：2 份输入文档 ✓、01/03/task-index + P0-001 卡（4 张不同卡）✓、reviews/ 3 份 ✓。
+
+**2. `.gitignore` 有效性 — PASS**
+命令：`git check-ignore -q <path>`，自建 20 个边界用例（超出清单要求的 5 个）
+原始输出：**20/20 命中，无一被绕过**。含 `exports/2026-09-16.export.json`、`exports/nested/deep/real-export.csv`、`mrw_v1.abcdefghijklmnopqrstuvwxyz123`、`docs/planning/mrw_v1.abc.def`、`.env` / `.env.local` / `.env.production`、`secrets/apprise.token`、`supabase/migrations/node_modules/pkg/index.js`（目录内嵌套 node_modules）、`service_role.json`、`config/credentials.json`、`id_rsa`、`morrow-export-2026.json`、`drafts-local/x.local-draft.json`、`.tmp/x`、`x.bak`、`x~`。
+
+**3. 无秘密入库 — PASS**
+命令：`git grep` 粗筛（`token|secret|password|credential|service_role|API_KEY|mrw_v1\.[A-Za-z0-9]{20,}`）+ 精确扫描（JWT `eyJ…`、`mrw_v1.<locator>.<secret>` 实例、`sk-*`、`sb_*_[A-Za-z0-9]{20,}`、赋值式凭据）+ 对**全历史所有 blob** 逐一 `git cat-file blob | grep -E`
+原始输出：精确扫描 `CLEAN: 无 JWT / 无 mrw_v1 实例 / 无 LLM key / 无硬编码赋值凭据`；粗筛命中经**逐条分类全部为规划正文的概念叙述**（如 `01-architecture.md:283` 的 `mrw_v1.<credential_uuid>.<base64url_secret>` 为格式占位符、`.gitignore` 注释、AGENTS/README 正文），非真凭据；`mrw_v1` 全仓仅 5 处（`.gitignore` 规则 2 行 + 架构占位格式 1 行 + 收据自述 2 行，含已声明的验证样例 `mrw_v1.abc.def`）。全历史 blob 扫描 **零 HIT**。**无真凭据，无需执行方更换 token。**
+
+**4. task-index.json 未被施工方改动 — PASS**
+命令：`for c in f881ded 9401eba c53edcc; do git rev-parse $c:docs/planning/task-index.json | git cat-file blob --stdin | shasum -a 256; done`
+原始输出：三个提交均为 `ce307d5eb7a5dd4ceb4476f335beb86156910556c8f3a6f1251625fddd73a97c`，与收据基线及当前文件实测值一致。文件内 15 张卡 status 全为 `PLANNED`，P0-001 未被自行标 PASS。
+
+**5. 未来目录空壳纪律 — PASS**
+命令：`find . -type d -not -path './.git/*'` + 点名 `[ -d ]` 检查
+原始输出：实际目录仅 `.`、`assets`、`contracts`、`contracts/v1`、`docs`（+`planning`/`evidence`/`evidence/P0-001`/`reviews`/`tasks`）、`scripts`、`supabase`、`supabase/migrations`、`tests`；`adapters`、`dist`、`.github`、`supabase/functions`、`assets/js`、`src` 全部「不存在」。骨架占位仅 5 个 `.gitkeep`。无越界工程目录。
+
+**6. README 追加边界 — PASS（附方法学限制，如实标注）**
+命令：`git show f881ded -- README.md`、`wc -l README.md`、`awk` 行号标注
+原始输出：因 `f881ded` 为 **root-commit**，git 显示 README 为 `new file mode 100644` / `--- /dev/null`，**该命令无法产出「修改 diff」**，故不能直接用 diff 证明「仅追加」。改用结构核验：全文 35 行，第 29 行起为新增节 `## 施工提交与证据约定（P0-001 定义）`（第 29–35 行，自标 P0-001 定义，单节自洽）；第 1–28 行为既有内容，各节完整无截断（「交付文件」6 条 +「原始依据」2 条 + Codex 段落收尾完整）。
+限制：施工前 README 副本已全盘检索（含 `.git`、`reflog`、`stash`）**无留存**，root-commit 仓库无法独立证明「原有内容逐字未被覆盖」。收据所称「原有 26 行」与当前第 1–27 行正文自洽（末行原无换行 → `wc -l` 计 26）。判定 PASS 基于**结构与自洽性**，非逐字可证，局限已注明。
+
+**7. 执行模型记录 — FAIL（本项导致 BLOCKED）**
+命令：`grep -n '执行环境' docs/planning/evidence/P0-001/result.md`；对照 `docs/planning/03-execution.md` §2
+事实：收据第 8 行记 `执行环境 = Trae + GLM-5.3 Flash（任务卡推荐执行组合）`；**需求方（凯哥）已确认实际执行模型为 GLM-5.3（非 Flash）**，收据未记录该模型替换。
+依据：03-execution §2 末段明确「若指定模型不可用……**把替换写入任务收据**」；§3 收据必填字段含「执行环境/模型」。以「任务卡推荐执行组合」填入「执行环境」字段，等于以推荐值替代实际值，构成**收据不实**。
+注：审查独立性未受影响（GLM-5.3 ≠ DeepSeek V4.1 Flash）。
+
+### 审查方自行发现的问题
+
+- **（P2，加固建议，不阻断）** `.gitignore` 未覆盖 direnv 惯例：实测 `git check-ignore -q .envrc`、`.direnv/foo` 均 `NOT IGNORED`（`secrets.txt`、`my_secret_notes.txt`、`config.json` 亦未忽略）。这些不在卡内声明覆盖范围，故不计 FAIL；建议后续任务补 `.envrc`、`.direnv/` 两行，防止真实秘密经 direnv 通道漏入。
+- **（P2，交付物对账）** 任务卡「交付物」要求「根 README **和 AGENTS** 按本包补充」，而收据「变更文件」栏明确 AGENTS.md「内容未改」，且 AGENTS.md 在保护基线内（`5bdd182f…` 与施工前一致）。核查 AGENTS.md 现内容已含授权范围/架构硬约束/执行与 Review/完成标准，实质满足本包要求，故不判 FAIL；但收据未就「AGENTS 已合规、无需改动」作一句说明以闭合该项。建议修订收据时一并补注。
+
+### 结论
+
+**BLOCKED（理由：收据不实）。**
+技术交付面（保护基线 29/29、gitignore 20/20、无秘密入库、task-index 未改动、目录纪律、README 边界）**全部通过**；唯一阻塞项为收据事实性缺陷：收据「执行环境」记 `Trae + GLM-5.3 Flash（任务卡推荐执行组合）`，与需求方确认的实际执行模型 `GLM-5.3（非 Flash）` 不符，违反 03-execution §2「替换写入任务收据」。
+
+**要求执行方（审查方不代改）**：修订收据「执行环境」一行，如实记为 `Trae + GLM-5.3（非 Flash；相对卡内推荐的 Flash 属模型替换，依 03-execution §2 记录）`，并补一个收据提交（前缀 `P0-001:`，如 `P0-001: fix evidence 执行模型记录为 GLM-5.3 非 Flash`），不改写已有提交历史、不 squash；顺带补注上述 AGENTS 项。修订后提交重审，重审通过方可 PASS。
+
+**分歧上报**：无需需求方裁决——本项为可核验事实差异，不构成执行方与审查方的判断分歧。
+
+### task-index.json P0-001 状态更新
+
+**未更新（因 BLOCKED）。** P0-001 保持 `PLANNED`；本次审查对 `docs/planning/task-index.json` **零改动**（实测 hash 仍 `ce307d5e…a97c`）。待收据修订并重审 PASS 后，由审查方单独将其更新为 `PASS`。
 
 ## 交接下一任务
 
