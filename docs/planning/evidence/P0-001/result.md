@@ -200,6 +200,50 @@ exit=0
 
 **未更新（因 BLOCKED）。** P0-001 保持 `PLANNED`；本次审查对 `docs/planning/task-index.json` **零改动**（实测 hash 仍 `ce307d5e…a97c`）。待收据修订并重审 PASS 后，由审查方单独将其更新为 `PASS`。
 
+### 重审记录（修复重审 · 本小节为 Review 区块追加内容）
+
+- 重审人 / 模型：WorkBuddy + DeepSeek V4.1 Flash
+- 重审时间（UTC）：2026-09-16T02:37:01Z
+- 重审基线：`main` @ `f590f45`，`git status --porcelain` 为空（干净工作区）
+- 重审范围：仅上轮 BLOCKED 项（执行模型记录）+ 执行方 Fix 提交（`3027c55` 主修复 / `f590f45` 收据追加）。不重跑已 PASS 的技术项，不改动上方前次结论原文。
+
+**1. 收据执行环境已如实修订 — PASS**
+命令：`sed -n '8p' docs/planning/evidence/P0-001/result.md`；`grep -n 'GLM-5.3 Flash'`、`grep -n '推荐执行组合'`
+原始输出：第 8 行 = `| 执行环境 | Trae + GLM-5.3（非 Flash；相对卡内推荐的 Flash 属模型替换，依 03-execution §2 记录） |`，与要求表述逐字一致，**已无「Flash（任务卡推荐执行组合）」**。
+残留核查：`GLM-5.3 Flash` / `推荐执行组合` 在本文件仅见于第 181、193 行——**本 Review 区块前次结论的「历史 bug 引用语境」**（引述旧值以说明问题），属无害；全仓其余命中（`03-execution.md:21` 模型路由表、`05-first-15-tasks.md:9`、`tasks/P0-001.md:44`、`task-index.json:16` executor）均为**施工规划对推荐模型的原始记载**，非收据事实陈述，不构成本次失实。
+
+**2. `.gitignore` 加固生效且无回归 — PASS**
+命令：`git check-ignore -v .envrc .direnv/foo`；对既有规则抽验 21 个用例
+原始输出：
+```text
+.gitignore:5:.envrc	.envrc
+.gitignore:6:.direnv/	.direnv/foo
+exit=0
+```
+与 Fix 提交所载原始输出**逐字一致**（规则行 5/6、exit=0）。回归抽验 21 项：原 10 条关键用例 + `config/credentials.json`／`id_rsa`／`morrow-export-2026.json`／`a.local-draft.ts`／`.tmp/x`／`npm-debug.log`／`x.bak`／`x~`／`dist/index.html`／`.DS_Store` 全部 `IGNORED`，**零退化**；`.env.example` 经 `!.env.example` 白名单仍 `NOT-IGNORED`（设计预期，未被误伤）。
+
+**3. AGENTS.md 合规补注已加入 — PASS**
+命令：`grep -n 'AGENTS.md' docs/planning/evidence/P0-001/result.md`；`shasum -a 256 AGENTS.md`
+原始输出：第 71 行 = `| AGENTS.md | 无改动 | 已合规（含授权范围/架构硬约束/执行与Review/完成标准，实质满足任务包要求），且在保护基线内（SHA256 5bdd182f…），保持施工前原样 |`；实测 AGENTS.md = `5bdd182fcbfa4516b9b9de4e336c4d4c0380475d96b1bb7a7def0c9c0619adbe`，与保护基线**一致**，确未改动。
+
+**4. Fix 提交范围收口 — PASS**
+命令：`git show 3027c55 --numstat` + `--name-only` 越界筛查；`git show f590f45 --numstat`
+原始输出：`3027c55` = `.gitignore` (+2/−0) + `docs/planning/evidence/P0-001/result.md` (+15/−3)，共 **2 个文件**；越界筛查结果「无越界文件」（未触及 AGENTS.md／规划文档／源码／task-index.json）。`f590f45` = 仅 result.md (+6/−0)。改动幅度 = 加固 2 行 + 收据修订，**未超预算**。
+
+**5. 提交历史未被改写 — PASS**
+命令：`git log --oneline`；`test "$(git rev-parse 3027c55^)" = "$(git rev-parse 15a5ba0)"`；`git reflog --all`
+原始输出：`f881ded`／`9401eba`／`c53edcc`／`15a5ba0` 原哈希依序完好；`OK: 3027c55 是 15a5ba0 直接子提交`；reflog 六条均为线性 `commit:` 记录，**无 rebase／squash／amend 痕迹**。
+
+**6. 收据无新引入失实 — PASS**
+命令：自行重跑 Fix 提交所载 `git check-ignore -v .envrc .direnv/foo`，与收据 §4b 输出比对
+原始输出：我方复跑结果与收据所载**完全一致**（命中规则行、忽略状态、exit 码均同）；Fix 新增文字（执行环境行、AGENTS 行、§4b 增补、Fix 记录小节）经逐行与仓库实测事实核对，未发现新失实。
+
+### 重审结论
+
+**PASS。** 上轮唯一阻塞项（收据执行模型记录失实）已依 03-execution §2 如实修订并留痕；附带 3 项修复（`.gitignore` 加固、AGENTS 合规补注、收据修订）均在授权范围内，无越界、无回归、无历史改写。前次 6 项技术核验结论继续有效，本次不重复认定。
+
+**task-index.json 更新（本次执行）**：P0-001 `status` 由 `PLANNED` 改为 `PASS`，并新增字段 `review_pass_commit: 3027c5529f5bf053e414d16fb198a9d2650dd213`；其余 14 个任务状态未动。
+
 ## Fix 提交记录（2026-09-16，响应 Review BLOCKED）
 
 - fix commit: `3027c5529f5bf053e414d16fb198a9d2650dd213`
