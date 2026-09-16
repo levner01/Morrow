@@ -200,6 +200,12 @@ exit=0
 
 **未更新（因 BLOCKED）。** P0-001 保持 `PLANNED`；本次审查对 `docs/planning/task-index.json` **零改动**（实测 hash 仍 `ce307d5e…a97c`）。待收据修订并重审 PASS 后，由审查方单独将其更新为 `PASS`。
 
+## Fix 提交记录（2026-09-16，响应 Review BLOCKED）
+
+- fix commit: `3027c5529f5bf053e414d16fb198a9d2650dd213`
+- 修订内容：收据执行环境改为 GLM-5.3（非 Flash，模型替换记录）；补注 AGENTS.md 合规说明；.gitignore 增补 .envrc/.direnv/
+- 待 Review 方重审
+
 ## 交接下一任务
 
 P0-001 完成签核后进入 **P0-002**（真实 Supabase/Auth/网络可行性探针）。前置缺口：Supabase CLI 与 Deno 未安装、Supabase 项目信息待凯哥提供（见 runtime-environment §4）。
