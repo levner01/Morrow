@@ -1,0 +1,13 @@
+{
+  "timezone": "Asia/Shanghai",
+  "tracking_started_on": "2026-09-15",
+  "weekday_codes": {
+    "mon": "workout_workday",
+    "tue": "ordinary_workday",
+    "wed": "workout_workday",
+    "thu": "ordinary_workday",
+    "fri": "workout_workday",
+    "sat": "weekend",
+    "sun": "weekend_workout"
+  }
+}

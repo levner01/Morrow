@@ -1,0 +1,9 @@
+{
+  "ok": false,
+  "error": {
+    "code": "NOT_A_REAL_CODE",
+    "message": "不存在的错误码",
+    "retryable": false,
+    "request_id": "3f6b2c1e-7a4d-4e8b-9c0f-1a2b3c4d5e6f"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "morrow command envelope v1",
+  "description": "统一命令事务信封（02-contracts.md C-04）。expected_version 仅 Agent 命令必填（OCC），Human 命令省略（LWW 由服务端身份决定）；是否必填按命令语义由 Core 判定，信封层保持可选。input 形状见各命令 schema。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["api_version", "idempotency_key", "input"],
+  "properties": {
+    "api_version": { "const": "1" },
+    "idempotency_key": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "expected_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    },
+    "input": { "type": "object" }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "api_version": "1",
+  "idempotency_key": "3f6b2c1e-7a4d-4e8b-9c0f-1a2b3c4d5e6f",
+  "expected_version": "7",
+  "input": {
+    "biz_date": "2026-09-15",
+    "anchor_type": "wake",
+    "actual_at": "2026-09-15T06:47:00+08:00",
+    "note": ""
+  }
+}

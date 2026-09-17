@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_anchor_note_v1 input",
+  "description": "02-contracts.md C-05。同一记录 LWW 仅改 note，其余当前字段由 Core 保留，不接受任意 JSON patch。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_id", "note"],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "note": { "type": "string", "minLength": 0, "maxLength": 2000 }
+  }
+}

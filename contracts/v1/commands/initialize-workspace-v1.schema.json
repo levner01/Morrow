@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "initialize_workspace_v1 input",
+  "description": "02-contracts.md C-05 + 01-architecture.md §3.2。weekday_codes 为初始周配置，必须明确 7 个 weekday 到 day_type code 的映射；仅首次初始化可执行。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["timezone", "tracking_started_on", "weekday_codes"],
+  "properties": {
+    "timezone": { "const": "Asia/Shanghai" },
+    "tracking_started_on": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+    },
+    "weekday_codes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+      "properties": {
+        "mon": { "enum": ["ordinary_workday", "workout_workday", "weekend", "weekend_workout"] },
+        "tue": { "enum": ["ordinary_workday", "workout_workday", "weekend", "weekend_workout"] },
+        "wed": { "enum": ["ordinary_workday", "workout_workday", "weekend", "weekend_workout"] },
+        "thu": { "enum": ["ordinary_workday", "workout_workday", "weekend", "weekend_workout"] },
+        "fri": { "enum": ["ordinary_workday", "workout_workday", "weekend", "weekend_workout"] },
+        "sat": { "enum": ["ordinary_workday", "workout_workday", "weekend", "weekend_workout"] },
+        "sun": { "enum": ["ordinary_workday", "workout_workday", "weekend", "weekend_workout"] }
+      }
+    }
+  }
+}

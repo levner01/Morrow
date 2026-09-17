@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_command_result_v1 input",
+  "description": "02-contracts.md C-05。只读自己收据；未找到不代表原请求已取消。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["idempotency_key"],
+  "properties": {
+    "idempotency_key": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    }
+  }
+}

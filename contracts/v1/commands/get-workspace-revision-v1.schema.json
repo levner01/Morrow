@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_workspace_revision_v1 input",
+  "description": "02-contracts.md C-05。无输入参数。",
+  "type": "object",
+  "additionalProperties": false
+}

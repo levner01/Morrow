@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "exported_at": "2026-09-15T12:00:00.000Z",
+  "app_version": "p0-003-fixture",
+  "workspace": {
+    "owner_id": "0c645909-ebb5-4910-ab99-4f7b238c9529",
+    "timezone": "Asia/Shanghai",
+    "data_revision": "42"
+  },
+  "data": {
+    "life_data": [],
+    "agent_advice": [],
+    "activity_log": [],
+    "automation_rules": [],
+    "agent_clients": [],
+    "workspace_settings": []
+  },
+  "counts": {
+    "life_data": 0,
+    "agent_advice": 0,
+    "activity_log": 0,
+    "automation_rules": 0,
+    "agent_clients": 0,
+    "workspace_settings": 0
+  },
+  "integrity": {
+    "algorithm": "SHA-256",
+    "canonicalization": "RFC8785",
+    "data_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

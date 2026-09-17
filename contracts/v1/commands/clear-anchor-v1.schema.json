@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "clear_anchor_v1 input",
+  "description": "02-contracts.md C-05。清事实不清计划，不物理删除。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["biz_date", "anchor_type"],
+  "properties": {
+    "biz_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+    },
+    "anchor_type": { "enum": ["wake", "workout_end", "lights_off"] }
+  }
+}

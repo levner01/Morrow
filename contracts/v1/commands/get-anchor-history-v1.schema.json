@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_anchor_history_v1 input",
+  "description": "02-contracts.md C-05。from/to 跨度最大 366 天的限制为跨字段规则，由 Core 判定。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["from", "to"],
+  "properties": {
+    "from": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+    },
+    "to": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+    },
+    "cursor": { "type": "string", "minLength": 1, "maxLength": 200 }
+  }
+}

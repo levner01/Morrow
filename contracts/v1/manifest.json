@@ -1,0 +1,223 @@
+{
+  "contract_version": "v1",
+  "generated_on": "2026-09-17",
+  "hash_method": "sha256(file utf-8 bytes) hex-lowercase",
+  "schemas": [
+    {
+      "path": "contracts/v1/payloads/anchor-v1.schema.json",
+      "sha256": "9e0d08aa4124c2aace70dd2af83dac0850142c4b8caaebab8fb2260644615611",
+      "loads_to": {
+        "table": "private.payload_schemas",
+        "module": "anchor",
+        "payload_v": 1
+      }
+    },
+    {
+      "path": "contracts/v1/payloads/day-type-v1.schema.json",
+      "sha256": "8ccf22ad345712dc77a157fe0d55eccb4f8978465814dc825f56466eacfa0b2a",
+      "loads_to": {
+        "table": "private.payload_schemas",
+        "module": "day_type",
+        "payload_v": 1
+      }
+    },
+    {
+      "path": "contracts/v1/commands/command-envelope-v1.schema.json",
+      "sha256": "9b906966fbca765b210882ce29c8cec579267b518cb14e0e5bd7ba5a77b64433",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/get-today-context-v1.schema.json",
+      "sha256": "1e9e29c7f5c47d6bc51b2ae969f99c18b8c1e198b093cfa790032ed036d6f04a",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/get-anchor-history-v1.schema.json",
+      "sha256": "3e0ae2c205abc71e7583f3f6776eba8ee8870e2fd810e5828bff378e174b8fba",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/set-day-type-v1.schema.json",
+      "sha256": "698347a966dd3761d8527f282df593a230d50542849ab9121f9c1f9ea096b1c8",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/check-anchor-v1.schema.json",
+      "sha256": "9ea05ef02e2deca35995c068adbfc8ddbb0895dc4d758324827f6da50a249efa",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/clear-anchor-v1.schema.json",
+      "sha256": "368fb523472c63884343d456cb2796bf713c1410385f3c904246518d88d3a381",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/update-anchor-note-v1.schema.json",
+      "sha256": "0dcbf91f9f05dc0d01e680bb27bf039cd7df7808c21c3aaf1c34d3aac4411bc4",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/initialize-workspace-v1.schema.json",
+      "sha256": "f70322cc35fa2768119b31e1184ec087e00ab489d21fcc4ee70c3c25f2a1bda4",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/record-open-v1.schema.json",
+      "sha256": "a91068cf3b4fe8ecd5bf19afa853b6ae64c5fc883efc0164ef5d74c6827e7f00",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/get-command-result-v1.schema.json",
+      "sha256": "cdf1c595251bc5b37c6a6f93c13d16feb0d0482b7dd4191dca732ddd8fbfc118",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/get-workspace-revision-v1.schema.json",
+      "sha256": "7aeb31e3c6c886aebe228423cdf296bc2751ecb7acec3a2b89d180b3ce1fb523",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/commands/manage-health-client-v1.schema.json",
+      "sha256": "60618f2f7d5ae8577e74f463b6caca2ff1e80591371444198a0a4a450d6da614",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/results/error-envelope-v1.schema.json",
+      "sha256": "212fbbd058b7e2f333976114e6aa93bd1410169dfbd22e6ef576bfaca81fb39b",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/results/success-envelope-v1.schema.json",
+      "sha256": "cfc207c71cd30afbbbfcc3e2d2bd8d211fb20db2c3415f7d5eaefd58f499e554",
+      "loads_to": null
+    },
+    {
+      "path": "contracts/v1/results/export-container-v1.schema.json",
+      "sha256": "3bda3e3447c20feceb6f92d9ef12ab646c96c536109e774b0f34cb2ecd33e19a",
+      "loads_to": null
+    }
+  ],
+  "fixtures": [
+    {
+      "path": "contracts/v1/fixtures/payloads/anchor-valid-wake-recorded.json",
+      "schema": "contracts/v1/payloads/anchor-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/payloads/anchor-valid-workout-not-applicable.json",
+      "schema": "contracts/v1/payloads/anchor-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/payloads/anchor-invalid-unknown-field.json",
+      "schema": "contracts/v1/payloads/anchor-v1.schema.json",
+      "expect_valid": false
+    },
+    {
+      "path": "contracts/v1/fixtures/payloads/anchor-invalid-payload-v.json",
+      "schema": "contracts/v1/payloads/anchor-v1.schema.json",
+      "expect_valid": false
+    },
+    {
+      "path": "contracts/v1/fixtures/payloads/anchor-invalid-status-enum.json",
+      "schema": "contracts/v1/payloads/anchor-v1.schema.json",
+      "expect_valid": false
+    },
+    {
+      "path": "contracts/v1/fixtures/payloads/day-type-valid-workout-workday.json",
+      "schema": "contracts/v1/payloads/day-type-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/payloads/day-type-valid-ordinary-workday.json",
+      "schema": "contracts/v1/payloads/day-type-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/payloads/day-type-invalid-four-anchors.json",
+      "schema": "contracts/v1/payloads/day-type-v1.schema.json",
+      "expect_valid": false
+    },
+    {
+      "path": "contracts/v1/fixtures/payloads/day-type-invalid-sleep-target.json",
+      "schema": "contracts/v1/payloads/day-type-v1.schema.json",
+      "expect_valid": false
+    },
+    {
+      "path": "contracts/v1/fixtures/payloads/day-type-schema-pass-core-order.json",
+      "schema": "contracts/v1/payloads/day-type-v1.schema.json",
+      "expect_valid": true,
+      "note": "边界记录：anchors 顺序/齐备性不由 schema 强制（pg_jsonschema 0.3.3 无 prefixItems），由语义 Core 拒绝乱序"
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/command-envelope-valid.json",
+      "schema": "contracts/v1/commands/command-envelope-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/command-envelope-invalid-missing-key.json",
+      "schema": "contracts/v1/commands/command-envelope-v1.schema.json",
+      "expect_valid": false
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/check-anchor-valid.json",
+      "schema": "contracts/v1/commands/check-anchor-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/check-anchor-invalid-forged-field.json",
+      "schema": "contracts/v1/commands/check-anchor-v1.schema.json",
+      "expect_valid": false
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/set-day-type-valid.json",
+      "schema": "contracts/v1/commands/set-day-type-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/initialize-workspace-valid.json",
+      "schema": "contracts/v1/commands/initialize-workspace-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/record-open-valid.json",
+      "schema": "contracts/v1/commands/record-open-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/manage-health-client-create-valid.json",
+      "schema": "contracts/v1/commands/manage-health-client-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/manage-health-client-revoke-credential-valid.json",
+      "schema": "contracts/v1/commands/manage-health-client-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/manage-health-client-invalid-revoke-missing-credential.json",
+      "schema": "contracts/v1/commands/manage-health-client-v1.schema.json",
+      "expect_valid": false
+    },
+    {
+      "path": "contracts/v1/fixtures/commands/get-anchor-history-valid.json",
+      "schema": "contracts/v1/commands/get-anchor-history-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/results/error-version-conflict-valid.json",
+      "schema": "contracts/v1/results/error-envelope-v1.schema.json",
+      "expect_valid": true
+    },
+    {
+      "path": "contracts/v1/fixtures/results/error-invalid-unknown-code.json",
+      "schema": "contracts/v1/results/error-envelope-v1.schema.json",
+      "expect_valid": false
+    },
+    {
+      "path": "contracts/v1/fixtures/results/export-container-empty-valid.json",
+      "schema": "contracts/v1/results/export-container-v1.schema.json",
+      "expect_valid": true
+    }
+  ]
+}

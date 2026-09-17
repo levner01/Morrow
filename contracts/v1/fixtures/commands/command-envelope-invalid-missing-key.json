@@ -1,0 +1,8 @@
+{
+  "api_version": "1",
+  "input": {
+    "biz_date": "2026-09-15",
+    "anchor_type": "wake",
+    "actual_at": "2026-09-15T06:47:00+08:00"
+  }
+}

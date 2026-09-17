@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_today_context_v1 input",
+  "description": "02-contracts.md C-05。biz_date 省略时由服务器按工作区时区计算 today。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "biz_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+    }
+  }
+}

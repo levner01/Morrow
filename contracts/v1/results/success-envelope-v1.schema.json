@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "morrow success envelope v1",
+  "description": "成功响应公共信封。record/data 等投影内容因命令与调用方 read scope 而异（02-contracts.md C-06：write 不隐含 read，无对应 read 只回最小收据），故信封层不限制投影字段，仅固定 ok/request_id/server_time。",
+  "type": "object",
+  "required": ["ok", "request_id", "server_time"],
+  "properties": {
+    "ok": { "const": true },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "server_time": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+    }
+  }
+}

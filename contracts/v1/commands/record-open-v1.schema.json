@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "record_open_v1 input",
+  "description": "02-contracts.md C-05。每 device 每 biz_date 至多一次的 Human 主动打开证据；重复调用幂等不刷日志。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["device_id", "biz_date"],
+  "properties": {
+    "device_id": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "biz_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+    }
+  }
+}

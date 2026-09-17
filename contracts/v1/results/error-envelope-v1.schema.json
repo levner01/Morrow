@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "morrow error envelope v1",
+  "description": "统一错误模型（02-contracts.md C-06）。code 集合为 M1 冻结枚举（含 C-08 EXPORT_TOO_LARGE）；details 按 read scope 裁剪由 Core 保证，message 不得含 SQL/token/密码/他人记录。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ok", "error"],
+  "properties": {
+    "ok": { "const": false },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "retryable", "request_id"],
+      "properties": {
+        "code": {
+          "enum": [
+            "INVALID_REQUEST",
+            "UNAUTHENTICATED",
+            "SCOPE_DENIED",
+            "OWNER_DENIED",
+            "RESOURCE_NOT_FOUND",
+            "ROUTE_NOT_ENABLED",
+            "VERSION_CONFLICT",
+            "ALREADY_EXISTS",
+            "IDEMPOTENCY_KEY_REUSED",
+            "DAY_PLAN_LOCKED",
+            "IDEMPOTENCY_RESULT_EXPIRED",
+            "RESOURCE_DELETED",
+            "PAYLOAD_UNSUPPORTED",
+            "VALIDATION_FAILED",
+            "RATE_LIMITED",
+            "STORAGE_UNAVAILABLE",
+            "AUDIT_UNAVAILABLE",
+            "EXPORT_TOO_LARGE"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "retryable": { "type": "boolean" },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "details": { "type": "object" }
+      }
+    }
+  }
+}

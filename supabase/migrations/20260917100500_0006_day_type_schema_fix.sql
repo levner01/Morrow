@@ -1,0 +1,60 @@
+-- P0-003 / migration 0006: day_type payload_v=1 schema 修正（0005 追加，不改已应用文件）
+-- 原因: pg_jsonschema 0.3.3 忽略 prefixItems（P0-003 实测），anchors 位置约束移至语义 Core，schema 用公共 items 形状
+begin;
+update private.payload_schemas
+set schema = $contract$
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "morrow.life_data day_type payload_v=1",
+  "description": "每日计划快照 payload 结构合同（02-contracts.md C-02）。anchors 固定 3 元素；pg_jsonschema 0.3.3 实测不支持 prefixItems 位置约束（P0-003 证据），故每位置的 type 固定性、wake/workout_end/lights_off 齐备性与顺序、训练日 workout_end=19:15/非训练日 null 等由语义 Core 强制，schema 约束元素公共形状与数组长度。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "payload_v",
+    "code",
+    "name",
+    "timezone",
+    "template_version",
+    "workout_expected",
+    "sleep_target",
+    "anchors",
+    "plan_locked"
+  ],
+  "properties": {
+    "payload_v": { "const": 1 },
+    "code": {
+      "enum": ["ordinary_workday", "workout_workday", "weekend", "weekend_workout"]
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 40 },
+    "timezone": { "const": "Asia/Shanghai" },
+    "template_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    },
+    "workout_expected": { "type": "boolean" },
+    "sleep_target": { "const": "22:15" },
+    "anchors": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "required", "target_local_time"],
+        "properties": {
+          "type": { "enum": ["wake", "workout_end", "lights_off"] },
+          "required": { "type": "boolean" },
+          "target_local_time": {
+            "type": ["string", "null"],
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+          }
+        }
+      }
+    },
+    "plan_locked": { "type": "boolean" }
+  }
+}
+$contract$::jsonb,
+    schema_hash = '8ccf22ad345712dc77a157fe0d55eccb4f8978465814dc825f56466eacfa0b2a'
+where module = 'day_type' and payload_v = 1;
+commit;

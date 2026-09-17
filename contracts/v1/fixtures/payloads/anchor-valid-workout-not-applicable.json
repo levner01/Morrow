@@ -1,0 +1,11 @@
+{
+  "payload_v": 1,
+  "anchor_type": "workout_end",
+  "timezone": "Asia/Shanghai",
+  "target_at": null,
+  "actual_at": null,
+  "status": "not_applicable",
+  "planned": false,
+  "note": "",
+  "plan_version": "3"
+}

@@ -1,0 +1,15 @@
+{
+  "payload_v": 1,
+  "code": "workout_workday",
+  "name": "训练工作日",
+  "timezone": "Asia/Shanghai",
+  "template_version": "1",
+  "workout_expected": true,
+  "sleep_target": "22:15",
+  "anchors": [
+    { "type": "wake", "required": true, "target_local_time": "06:50" },
+    { "type": "workout_end", "required": true, "target_local_time": "19:15" },
+    { "type": "lights_off", "required": true, "target_local_time": "22:15" }
+  ],
+  "plan_locked": false
+}

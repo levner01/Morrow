@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "morrow.life_data anchor payload_v=1",
+  "description": "锚点 payload 结构合同（02-contracts.md C-02）。仅表达单字段结构约束；recorded⇔actual_at 非空、not_applicable⇒planned=false、status 由 Core 导出等跨字段不变量由语义 Core 强制，不在此表达。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "payload_v",
+    "anchor_type",
+    "timezone",
+    "target_at",
+    "actual_at",
+    "status",
+    "planned",
+    "note",
+    "plan_version"
+  ],
+  "properties": {
+    "payload_v": { "const": 1 },
+    "anchor_type": { "enum": ["wake", "workout_end", "lights_off"] },
+    "timezone": { "const": "Asia/Shanghai" },
+    "target_at": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+    },
+    "actual_at": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+    },
+    "status": { "enum": ["pending", "recorded", "not_applicable"] },
+    "planned": { "type": "boolean" },
+    "note": { "type": "string", "minLength": 0, "maxLength": 2000 },
+    "plan_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    }
+  }
+}
