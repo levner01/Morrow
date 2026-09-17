@@ -35,6 +35,9 @@ npm-debug.log*
 yarn-error.log
 *.log
 
+# ===== Supabase CLI 本地临时（P0-002：cli-latest、linked-project.json）=====
+supabase/.temp/
+
 # ===== 系统文件 =====
 .DS_Store
 Thumbs.db
