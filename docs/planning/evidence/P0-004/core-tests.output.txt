@@ -1,0 +1,86 @@
+===== 0. 清场（postgres 运维：scoped owner，保留 workspace_owner/workspace_state 行） =====
+PASS  Z0_clean_slate
+===== A. RPC 角色白名单 / grants =====
+PASS  A1_anon_rpc_denied
+PASS  A2_helper_no_execute
+PASS  A3_test_entry_no_execute
+PASS  A4_service_role_rpc_denied
+===== B. Human 直 DML 拒绝（P0-003 回归） =====
+PASS  B1_owner_direct_dml_denied
+===== C. 伪造拒绝 =====
+PASS  C1_forged_user_id_rejected
+PASS  C2_human_expected_version_rejected
+PASS  C3_forged_puid_denied
+PASS  C4_nonowner_denied
+===== D. 可信 actor 上下文（trigger 层） =====
+PASS  D1_insert_without_actor_rejected
+PASS  D2_source_forced_from_actor
+===== L. initialize_workspace（先并发，再重复/重放） =====
+PASS  L1_concurrent_init_only_once (a.ok=true b.ok=false settings=1)
+PASS  L2_second_init_rejected
+PASS  L3_same_key_replay
+PASS  L4_settings_row
+===== K. manage_health_client（create/rotate/revoke/幂等/锁序并发） =====
+PASS  K1_create
+PASS  K2_replay_no_dup
+PASS  K2b_replay_no_extra_client
+PASS  K3_same_key_diff_input_409
+PASS  K4_rotate
+PASS  K4b_old_cred_tightened_24h
+PASS  K7_concurrent_same_key_create_single
+PASS  K8b_both_completed
+PASS  K5_revoke_credential
+PASS  K5b_revoke_replay
+PASS  K5c_revoke_again_no_change
+===== E. 有效更新增版 / no-op 不增（agent create + human LWW + agent OCC） =====
+PASS  E1_agent_create
+PASS  E2_human_update
+PASS  E3_noop_no_bump
+PASS  E4_agent_occ_update
+PASS  E5_stale_version_conflict
+PASS  E5b_agent_missing_expected_rejected
+PASS  E5c_human_with_expected_rejected
+PASS  E6_single_audit_source(3)
+===== F. 幂等（core 框架级） =====
+PASS  F1_replay
+PASS  F1b_replay_no_rewrite
+PASS  F2_same_key_diff_input_409
+===== G. create0 不覆盖 / tombstone =====
+PASS  G1_create0_existing_409
+PASS  G2a_seed
+PASS  G2b_create_on_tombstone_410
+PASS  G2c_tombstone_bumped_version
+===== H. 技术故障整体回滚 =====
+PASS  H1_fault_raises
+PASS  H2_full_rollback (rev=40 receipts=22 life=4 activity=29)
+===== I. T03 20 并发有效更新无重号（Review 深审条件 1） =====
+  versions: 20 unique, range 4..23, base=3 final=23 ok=20
+PASS  T03_20concurrent_unique_versions
+===== J. T04 双 agent 同 expected_version 并发：仅一成功 =====
+  a=VERSION_CONFLICT b=ok final=24 (expected 24)
+PASS  T04_occ_single_winner
+===== K6. revoke client ×2（锁序 client→credentials→state→receipt） =====
+PASS  K6_revoke_client
+PASS  K6b_client_disabled
+PASS  K6c_all_creds_revoked
+PASS  K6d_revoke_again_no_change
+PASS  K6e_revoke_unknown_client_404
+PASS  K6f_reject_replay
+PASS  K9a_bad_action_rejected
+PASS  K9b_unknown_field_rejected
+PASS  K9c_bad_client_id_rejected
+===== M. token 保密 =====
+PASS  M1_response_no_hash
+PASS  M2_receipts_no_token_hash
+PASS  M3_activity_no_token_hash
+===== N. 只读收据 / revision =====
+PASS  N1_unknown_key_404
+PASS  N1b_readonly_no_side_effect
+PASS  N2_known_receipt
+PASS  N3_revision_string
+===== O. last_seen 不增 client 版 / 但 bump revision / 无配置日志 =====
+PASS  O1_last_seen_semantics (v=2 rev 90->91 logs=2)
+===== 复位：删除测试用 settings 行（postgres 运维复位，供未来真实初始化） =====
+PASS  Z1_settings_reset
+
+===== SUMMARY: PASS=64 FAIL=0 =====
