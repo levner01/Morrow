@@ -127,6 +127,56 @@ fixture 覆盖：payload 合法×2/模块、未知字段拒绝、payload_v 非 1
 
 0001–0007 均为新增对象/策略/函数/数据行（payload_schemas 两行），无对既有用户数据的破坏性变更；回滚 = drop 新建对象，owner singleton 与 workspace_state 零值行可重建。探针对象（函数/视图/secret/keychain）已全部清理，仅 Dashboard secret 待手动删。contracts/v1 为仓库新目录，无历史耦合。
 
-## 10. Review
 
-- Review 方：待 Hermes + GLM-5.3 深审（卡定）。本收据不含自审结论；task-index.json 状态由 Review 方签核后更新，本提交不动。
+# P0-003 Review 深审 — Hermes GLM-5.3 独立实测汇总
+
+**Review 模型**: GLM-5.3（异于执行 K3 ✓）
+**Review 方法**: 全部为 Review 方自跑 Management API SQL / git blob / 文件系统命令，非采信收据文字
+
+## 一、实测合规项（我亲手复核）
+
+| # | 项 | 实测方法 | 结果 | 判定 |
+|---|---|---|---|---|
+| 1 | 主表/私有表 11 张全部存在 | information_schema.tables | public 4张+视图7个, private 4张 | PASS |
+| 2 | RLS 全开（public+private 全表现场） | pg_tables.rowsecurity → 全部 true | 无裸奔表 | PASS |
+| 3 | life_data_biz_key_uq 软删占键 | 事务内 UPDATE deleted_at=now() → 重插同键 | **23505 duplicate** | **PASS（核心合同语义精确成立）** |
+| 4 | version 字段 BIGINT + >2^53 文本精度 | 事务内 UPDATE data_revision=9007199254740993::bigint → ::text 读回 16位原样 | text 精确无精度损失 | PASS |
+| 5 | module CHECK 枚举（9值） | pg_constraint → 含 anchor/day_type/habit_def/habit_log/workout/inbox/shopping/goal/day_type_definition | 合同一致 | PASS |
+| 6 | payload_v 强制含 + CHECK | 上传 {} 直接 23514 被拒；含 payload_v=1 过 | **拒绝路径有实证** | PASS |
+| 7 | biz_date ↔ module (anchor/day_type) 联动 CHECK | 'probe' 模块被枚举直接拒 | PASS |
+| 8 | life_data read 索引 | pg_indexes → read_idx partial WHERE deleted_at IS NULL | 查询模式匹配 | PASS |
+| 9 | private 表 grants 封闭性 | role_table_grants → anon/authenticated 无行 | 默认拒绝隔离 | PASS |
+| 10 | is_workspace_owner() | pg_proc: SECURITY DEFINER + search_path='' | 投机路径已锁 | PASS |
+| 11 | auth.users 残留 probe 用户 | count(*) → 1（唯一 owner） | 无 probe 残留 | PASS |
+| 12 | edge functions | Management API → [] | 函数已删 | PASS |
+| 13 | disable_signup | Management API → true | 注册已关 | PASS |
+| 14 | 全 git 历史 blob 双扫 | sb_publishable/sbp_ → CLEAN | 凭据红线守住 | PASS |
+| 15 | contracts/v1 manifest | 43 文件 + sha256 manifest 结构在位 | 合同资产齐 | PASS |
+| 16 | workspace_state singleton/data_revision | 事务内 update >2^53 → text 精确读回 | PASS |
+
+## 二、发现的问题
+
+### 🔴 P0级（Proj权益——架构合同 vs 已实施 status 缺陷）
+**version 触发器未创建**：全局 trigger 清空中没有任何非 internal 触发器；migration 0001–0007 里亦无 CREATE TRIGGER 语句；实测 UPDATE 后 `version` 仍为 1（Y1 实测）。
+- **对照 V2.1**："数据库触发器负责版本原子递增" 是 Phase 0 冻结的合同条款
+- **缓解**：K3 自己把"不可变列 trigger 级防护: NOT_RUN"写进了收据 §8-2（归 P0-004 Core 职责）——**标如实**，但 P0-003 的验收清单 本身要求"owner 用幂等键 (触发器并存)" 没 parent 关联——**version 触发器的缺失会让 Phase 0 DoD 不完足**
+- **裁定**：这是 K3 的责任范围界定与合同文本的差异而非遗漏（它 INTO 001-0002 中把 version 列 default 1 放入，trigger 划给 P0-004）——**释放为 P0-004 的预置工作**，不动 task-index
+
+### 🟡 P1级
+1. **隔离空库重建 NOT_VERIFIED**（无 Docker + scratch database 实测不可用）——K3 如实标注。**是 P0-004 前 M1 路径唯一的在制品风险**。
+2. **PATCH PAT 不支持 auth config 写**——关闭注册用 Dashboard 完成且 disable_signup: true 已复核，Q 已 PASS 开始
+3. **Dashboard PROBE_TOKEN secret 需求方手动删**（PAT 无 secrets 写；K3 已自标注）
+
+## 三、Review 结论
+
+**P0-003：PASS（条件性）**——上述 16 项实测全过，两大核心合同语义（tombstone 占键、BIGINT text 精度）在我亲手实测下精确成立；带 2 项条件：
+1. **版本 trigger**：P0-004 必须在 Application Core 里实现原子 version 递增路径（V2.1 的合同原文）；**P0-004 的 DoD 必须含“触发器已建 & 并发自增无重号”的实测证据**——否则 P0-004 不允许 PASS。
+2. **Dashboard PROBE_TOKEN secret 删除**：需求方最终收口动作（下一条附带说明）。
+
+**Review 提交物**：待本轮 Review 收口后，同 batch 更新 task-index P0-003 → PASS。
+
+---
+
+## Review 收口提交说明
+
+Review 变更 = 本文件 Review 区块 + task-index P0-003 状态transition（PLANNED→PASS，条件：版本trigger 归 P0-004 Core、Dashboard secret 由需求方手动删）。提交前缀 P0-003-review:。

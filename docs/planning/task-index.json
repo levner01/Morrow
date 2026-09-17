@@ -2,7 +2,7 @@
   "planning_version": "1.1",
   "milestone": "M1 = Phase 0 + MVP + 7 days real use",
   "implementation_status": "NOT_STARTED",
-  "next_task": "P0-003",
+  "next_task": "P0-004",
   "phase1_gate": "LOCKED: 14 days + 80% + owner confirmation",
   "tasks": [
     {
@@ -40,7 +40,7 @@
       "id": "P0-003",
       "title": "落地版本化Schema与共享合同",
       "phase": "Phase 0",
-      "status": "PLANNED",
+      "status": "PASS",
       "dependencies": [
         "P0-002"
       ],
@@ -48,7 +48,8 @@
       "executor": "Trae + Kimi K3",
       "reviewer": "Hermes + GLM-5.3",
       "task_file": "tasks/P0-003.md",
-      "evidence_file": "evidence/P0-003/result.md"
+      "evidence_file": "evidence/P0-003/result.md",
+      "review_pass_commit": "8f6be16"
     },
     {
       "order": 4,
