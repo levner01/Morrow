@@ -232,9 +232,9 @@ publishable key / access token 值未写入任何仓库文件或本收据。
 
 **NOT_CAPTURED**：Edge 三态原始响应输出（已发生、证据未持有，§D.3）
 
-**待确认**：
-- `docs/runtime-environment.md` 的 deno/CLI 已装增量未随本提交（凯哥圈定范围未含）——补录时机待确认
-- BLOCKED-1 子项移交 P0-003 一并补测的可接受性
+**待确认**（2026-09-17 已全部处置，见下方 Fix 收口节）：
+- ~~`docs/runtime-environment.md` 的 deno/CLI 已装增量~~ → 已补录（Review 条件 2，本 fix 提交）
+- ~~BLOCKED-1 子项移交 P0-003 一并补测的可接受性~~ → 需求方已裁决移交（Review 条件 1 同口径）
 
 ## Review 区（Review 方填写）
 
@@ -275,6 +275,25 @@ Review 日期(UTC): 2026-09-17 ~03:0xZ
 - [x] task-index.json：P0-002 状态 PLANNED → PASS（Review 方执行，本次提交内一并写入）
 
 **Review 收口提交说明**：本次 Review 唯一变更 = 本文件 Review 区块 + task-index P0-001→P0-002 状态transition。含 disclaimers：家机列 PENDING、BLOCKED-1 移交 P0-003、runtime-environment.md 补录要求（由 Trae 的下一次 P0-002-fix 顺带完成）。
+
+## Fix 收口（2026-09-17，响应 Review 条件与需求方裁决）
+
+**Review 条件 2 执行**：`docs/runtime-environment.md` 已补录 supabase CLI 2.117.0 / Deno 2.9.6 / brew 不存在 / 代理实测结果 / 项目已提供（本 fix 提交内一并完成）。
+
+**需求方遗留事项处置裁决（2026-09-17，P0-002 → P0-003 施工范围交接，原话要点）**：
+
+1. DDL 6 项（probe 用户、probe_rls、probe_int8、probe_json DDL、pg_jsonschema、sm/security_invoker 视图、int8::text）→ **P0-003 migration 施工后补测**（与 Review 条件 1 同口径）
+2. 关闭公开注册 → **走 SQL 实现**（`UPDATE auth.config SET ...` 或等效 GoTrue config 的 DB 实现路径），**不通过 PATCH config/auth**（该端点对当前 PAT 403，与 Review 审 10 实测一致）；管理路径收口后如需恢复，由 P0-005 安全审计用 token patch 回设
+3. Edge probe 三态复测（P0-003 内执行）：`supabase functions deploy probe-health --no-verify-jwt` → PROBE_TOKEN secret set → 三态实测 → **立即删除**；keychain `MORROW_PROBE_TOKEN` 用毕即销
+
+**施工工程师执行附注（供 P0-003 开工核对，非裁决内容）**：
+
+- **写权限依赖**：keychain 当前 PAT 为只读版（Review 审 10 实锤，重部署 403 / PATCH 403 / SQL 25006 read-only）——上列 2、3 与 DDL 6 项全部依赖 **Review 条件 4 的 token 轮换**完成（新 token 需含 Database SQL 读写 + Edge Functions 部署 scope）。P0-003 开工前须确认轮换已执行，否则相应项继续 BLOCKED。
+- **auth.config 路径待实测**：托管 Supabase 的 GoTrue 配置通常由平台管理，`auth.config` 表在托管项目的存在性与 GoTrue 是否热加载该表**未验证**；若 SQL 路径实测不可行，按卡标 BLOCKED 报需求方，不自行改架构（裁决已含"或等效 DB 实现路径"授权，等效路径同样需实测）。
+- **"P0-005 用相同 token"的对齐理解**：token 已计划轮换（Review 条件 4），该句按"届时有效的 morrow-p0-probe PAT"理解；若 P0-005 晚于 2026-09-23 到期日执行，需届时换发并注意 disable_signup 恢复值核对。
+- **PROBE_TOKEN secret 清理待核实**：Edge secrets 为项目级，P0-002 收据 §G"随函数删除"的表述属推断；P0-003 复测部署前先 `supabase secrets list`，若 PROBE_TOKEN 残留则 unset 并在此更正记录。
+
+**交接状态更新**：① Review 已签核（`c2532f5`，条件性 PASS，条件 1–3 已成立/落实，条件 4 待需求方执行）② 家机列 PENDING 归桶 P0-008（Review 条件 3）③ BLOCKED-1 已裁决移交 P0-003。P0-003 开工等待：token 轮换确认 + 需求方开工令。
 
 ## 涉及真实账号或网络的已脱敏说明
 
