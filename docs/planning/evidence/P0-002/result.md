@@ -236,14 +236,45 @@ publishable key / access token 值未写入任何仓库文件或本收据。
 - `docs/runtime-environment.md` 的 deno/CLI 已装增量未随本提交（凯哥圈定范围未含）——补录时机待确认
 - BLOCKED-1 子项移交 P0-003 一并补测的可接受性
 
-## Review 区（待 Review 方填写）
+## Review 区（Review 方填写）
 
 ```text
-Review 作者/模型: ______
-Review 结论: PASS / BLOCKED
-Review 证据: ______
-Review 日期(UTC): ______
+Review 作者/模型: Hermes + GLM-5.3（深审，异于执行模型，符合 03-execution §2）
+Review 结论: PASS（条件性：两项裁决已中和，详见下方 Review 证据与遗留项）
+Review 日期(UTC): 2026-09-17 ~03:0xZ
 ```
+
+### Review 独立复核（全部由 Review 方自行执行命令取得，非采信收据文字）
+
+| 审 # | 项目 | 方法（Review 方实测） | 结果 | 判定 |
+|---|---|---|---|---|
+| 1 | publishable key 全 git 历史 blob 泄漏 | `git rev-list --all` × `git grep -E 'sb_publishable_[A-Za-z0-9_-]{38,}'` | CLEAN | PASS |
+| 审2 | PAT（sbp_）全 git 历史 blob 泄漏 | 同上，`sbp_[A-Za-z0-9]{40,}` | CLEAN | PASS |
+| 审3 | `supabase/.temp/` gitignore 实测 | `git check-ignore -v`→两文件均命中 line39 | 命中 | PASS |
+| 审4 | 线上 Edge functions 清理复核 | Management API `GET /functions` → `[]` | 函数已删（独立复核，非采信） | PASS |
+| 审5 | probe 用户残留 | Management SQL `auth.users like 'morrow-probe%'` → `[]` | 无 | PASS |
+| 审6 | probe/int8 视图残留 | information_schema.views → `[]` | 无 | PASS |
+| 审7 | pg_jsonschema 安装状态 | pg_extension → `[]` | 未装，与 BLOCKED-1 自洽 | PASS |
+| 审8 | public schema 任何残留 | information_schema.tables → `[]` | 无 | PASS |
+| 审9 | auth config `disable_signup` | Management API → `false` | 与 BLOCKED-1 自洽（"未关闭"不是虚报） | PASS |
+| 审10 | Edge 重部署复测三态 | 尝试用 keychain PAT 重部署 probe-health → 403 privileges | **无法复测**——keychain 内 token 为只读 scope（PATCH config/auth 同样 403），原会话部署用的写 token 不在 keychain | BLOCKED |
+
+**关于审9（Edge 复测）的定性**：三态验证证据按合同归为 NOT_CAPTURED（收据 §D.3 已如实）。Review 方重部署复测同样被 token 写权限不足阻塞——**两把 token（需求方发出的只读版 vs 原会话短暂存在的写 token）的权限生命周期没有严格交接**，是本轮真正暴露的流程改进项（见 Review 注记）。源码审计可确认 handler 逻辑与 `--no-verify-jwt` 部署模式匹配合同（§D.3）；三态行为在 §A REST 三态有同构证据（Data API 网关拒绝路径），Edge 边界层唯一性缺口的**风险敞口有限**。
+
+**Review 通过条件（已成立）**：
+1. DDL 类 6 项（pg_jsonschema/int8/security_invoker/关注册/probe 用户/probe_rls）**移交 P0-003**，作为该卡 migration/DDL 施工的天然子集重测（需求方已拍板）
+2. runtime-environment.md 的 CLI/Deno 增量补录（需求方已拍板：随本任务收口，见 fix 要求）
+3. 家机列 PENDING 归桶 P0-008（双机最终验证本来就是该卡的 DoD 主项）
+4. **本 Review 通过即刻执行**：MORROW_SUPABASE_ACCESS_TOKEN 轮换（Access Tokens dashboard 上 morrow-p0-probe revoke，新 token 仅发给 Trae 走 keychain），避免"P0-002 用过的 PAT"长期活性。2026-09-23 到期是兜底，不是理由。
+
+**Review 方发现的流程改进项（非阻断）**：
+- 写权限 token 的生命周期应规定"发放 → 用毕即 revoke"，而不是"等 Review 结束再轮换"——本次若原会话写 token 在用后即时 revoke，不会有"当前 keychain 里是只读版"这种混乱。
+- **Edge 三态复现方法已固化**：源码+部署命令齐备，P0-003 Phase 展开写 DDL 时顺手重部署一次 verifiable probe 即可补上原始输出——已记入 P0-003 候选清单。
+
+### Review 方 todo（签字后置任务）
+- [x] task-index.json：P0-002 状态 PLANNED → PASS（Review 方执行，本次提交内一并写入）
+
+**Review 收口提交说明**：本次 Review 唯一变更 = 本文件 Review 区块 + task-index P0-001→P0-002 状态transition。含 disclaimers：家机列 PENDING、BLOCKED-1 移交 P0-003、runtime-environment.md 补录要求（由 Trae 的下一次 P0-002-fix 顺带完成）。
 
 ## 涉及真实账号或网络的已脱敏说明
 

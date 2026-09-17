@@ -2,7 +2,7 @@
   "planning_version": "1.1",
   "milestone": "M1 = Phase 0 + MVP + 7 days real use",
   "implementation_status": "NOT_STARTED",
-  "next_task": "P0-001",
+  "next_task": "P0-003",
   "phase1_gate": "LOCKED: 14 days + 80% + owner confirmation",
   "tasks": [
     {
@@ -24,7 +24,7 @@
       "id": "P0-002",
       "title": "验证真实Supabase、Auth、Edge及双机访问前提",
       "phase": "Phase 0",
-      "status": "PLANNED",
+      "status": "PASS",
       "dependencies": [
         "P0-001"
       ],
@@ -32,7 +32,8 @@
       "executor": "Trae + Kimi K3",
       "reviewer": "Hermes + GLM-5.3",
       "task_file": "tasks/P0-002.md",
-      "evidence_file": "evidence/P0-002/result.md"
+      "evidence_file": "evidence/P0-002/result.md",
+      "review_pass_commit": "ddee623"
     },
     {
       "order": 3,
