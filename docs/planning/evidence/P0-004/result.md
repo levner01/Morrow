@@ -71,3 +71,71 @@
 - 停等双 Review（Hermes + GLM-5.3 深审；WorkBuddy DeepSeek V4.1 Flash 独立反例初审）
 - 凯哥手动删除 Dashboard 孤儿 PROBE_TOKEN secret
 - task-index 未动，由 Review 方更新
+
+---
+
+# P0-004 Review 深审 — Hermes GLM-5.3 独立实测汇总
+
+**Review 模型**: GLM-5.3（异于执行 Kimi K3 ✓）
+**Review 方法**: 全部为 Review 方自跑 Management API SQL / git blob / 文件系统命令，不采信收据文字；深审条件继承 P0-003 Review 裁决（version trigger 实测 + 并发无重号为 P0-004 DoD 硬项）。
+**独立复跑证据**: [review-rerun-core-tests.output.txt](review-rerun-core-tests.output.txt)（Review 方亲手重跑 64 断言，SUMMARY: PASS=64 FAIL=0，与施工输出逐项吻合，含 H2 rev=40、O1 90→91、T03/T04 输出同构）。
+
+## 一、实测合规项（我亲手复核）
+
+| # | 项 | 实测方法 | 结果 | 判定 |
+|---|---|---|---|---|
+| 1 | 0009/0010 真已应用 | pg_proc：`cmd_pre_reject`/`core_test_write_v1`/`receipt_begin` 现场定义含 `::json` 修复 | 生产函数即文件最终版 | PASS |
+| 2 | 8 项业务 trigger 全启用 | pg_trigger 全景（tgenabled=O） | life_data×3/settings×2/clients×2/activity×1 全在 | PASS |
+| 3 | T03 并发无重号（深审条件 1） | 亲手复跑 20 并发 UPDATE 同行 | 20 unique、range base+1..base+20、final 吻合 | **PASS** |
+| 4 | T04 OCC 单赢家（深审条件 2） | 亲手复跑双 agent 同 expected | 一 ok 一 VERSION_CONFLICT，final=expected+1 | **PASS** |
+| 5 | 64 断言独立复跑 | 重跑 core-tests.sh（keychain PAT） | **64/64 PASS**，与施工输出同构 | PASS |
+| 6 | `cmd_pre_reject` conflict 分发 | R3：同 key 异 input 事务内探针 | `IDEMPOTENCY_KEY_REUSED`（正确） | PASS |
+| 7 | `cmd_pre_reject` expired 分发 | R4：receipt state='expired' 构造 | `IDEMPOTENCY_RESULT_EXPIRED`（正确，无需时间机） | **PASS（施工方标 NOT_RUN 的项，我实测通过）** |
+| 8 | `cmd_pre_reject` ACL | has_function_privilege 三角色 | anon/authenticated/service_role 全 false | PASS |
+| 9 | initialize expired 分支 | R1：state 构造 + 同 input 重调 | `IDEMPOTENCY_RESULT_EXPIRED`，业务未重跑 | PASS |
+| 10 | revoked→rotate 拒绝 | R5：事务内 create→revoke→rotate | `RESOURCE_DELETED`（C-05.1 语义正确） | PASS |
+| 11 | revoked→create 同名=新 client | R5：create 返回新 client_id | 不复活旧 client，新身份合法 | PASS |
+| 12 | credentials 不可读（S05） | authenticated SELECT 探针 | 42501 | PASS |
+| 13 | activity_log 不可删（S05 扩展） | authenticated DELETE 探针 | 42501 | PASS |
+| 14 | anon 全盲（S01） | anon SELECT life_data | 42501 | PASS |
+| 15 | private 函数 bulk ACL | R6：has_function_privilege 全扫 | 仅 4 cmd_* + is_workspace_owner(authenticated) 对 auth 开放，其余全拒 | PASS |
+| 16 | BIGINT 精度（>2^53） | data_revision=2^63-1 → ::text | 19 字符逐字符精确 | PASS |
+| 17 | activity_log FK（agent 伪造拒绝） | R2 失败输出顺带证实 | 虚构 agent_id 插入被 FK 23503 拦截——审计行 agent 必须真实存在 | PASS（意外收获） |
+| 18 | settings 版本 trigger 回归 | R10：真实行 update | v1→v2 | PASS |
+| 19 | 0001-0007 未改 | git diff 8f6be16..3372df6 -- migrations | 仅 0008/0009/0010 新增 | PASS |
+| 20 | 凭据红线 | git 全历史 blob 扫 sbp_/sb_publishable_/eyJ JWT 模式 | 仅 P0-002 收据里的前缀字面量与 fixture 截断示意，无真实值 | PASS |
+| 21 | task-index 未被施工方动 | git status + diff HEAD | 干净 | PASS |
+| 22 | health-client-token.mjs 语法 | node --check | 通过；脚本纪律合规（token 本地生成、只传 hash、keychain 暂存、失败清理） | PASS |
+
+## 二、发现的问题
+
+### 🟡 P1级 — `core_test_write_v1` 缺 expired 分支（协议缺陷，非阻断）
+
+R2b 实锤：identical-input expired receipt 重放时，`core_test_write_v1` 无 expired 分支 → 业务逻辑完整执行一遍 → `receipt_complete` 炸 P0001 `receipt_state_invalid` → 整体回滚。生产无残留（回滚兜底），但违反 C-04 "超期请求返回 409 IDEMPOTENCY_RESULT_EXPIRED 绝不能重跑" 的协议语义——返回的是技术错误而非合同封套。
+
+**性质界定**：`core_test_write_v1` 是测试专用入口（仅 postgres 可执行，grant 全撤），生产四命令的 expired 分发均已实测正确（R1/R4）。M1 无收据清理任务（C-04），expired 生产不可达。**裁定：不构成 P0-004 DoD 违背，不阻断 PASS**。
+
+**移交 P0-005 必测清单**：
+1. `core_test_write_v1` 补 expired 分支（与 initialize/manage 同构三分发）——修复项，非纯测试项。
+2. P0-005 并发反例测试需覆盖：expired receipt 同 input 重放、processing 残留的 `receipt_in_progress_stuck` 路径（0.2s×2 短等后技术故障回滚）。
+
+### 🟡 观察项（不要求修复）
+
+1. **envelope 形状拒绝不建 receipt**：envelope 畸形时 key 未解析无法建 namespace，重复畸形请求会重复写 `command.rejected` 审计行。合同未要求畸形请求幂等，M1 单用户可接受。
+2. **C3 测试命名误导**：`C3_forged_puid_denied` 实测的是 non-owner 分支（p_uid≠auth.uid()），行为正确，命名与语义错位。
+3. **复跑后线上测试残留**：复跑矩阵 Z0 清场在开头、Z1 只复位 settings；跑完留 receipts=50/activity=57/clients=3/life=4，与施工方跑后同构（下次 Z0 可清）。验收测试数据非生产数据，风险可控。
+4. **`core_test_write_v1` 绕过 auth.uid()**：以 postgres 直驱设计（身份由 workspace_owner 内部复核），M1 期验收通道，P0-009 Phase0 门禁时需做退役/保留决策。
+5. **模型路由纠偏**：Kimi K3 施工符合 03-execution §2 路由（DB/事务=K3），收据如实记录。Review 方 skill 内过时的"Trae=GLM-5.3"路由信息已修正。
+
+## 三、Review 结论
+
+**P0-004：PASS（条件性）**
+
+- P0-003 Review 钉死的两大深审条件（version trigger 落地 + 并发无重号实测）均已在 Review 方亲手复跑下精确成立，64/64 独立复现。
+- 施工方标 NOT_RUN 的 expired 分支（initialize/manage/cmd_pre_reject），我用事务内 state 构造法实测通过——比施工方声明走得更远。
+- `core_test_write_v1` expired 缺口为测试入口协议缺陷，移交 P0-005 必测清单，不阻断。
+- 唯一需求方动作不变：**Dashboard 孤儿 PROBE_TOKEN secret 手动删除**（凯哥）。
+
+**条件（下期 DoD 硬项）**：P0-005 安全与并发反例测试必须包含本 Review 的 R2b 缺陷修复验证 + processing 残留路径 + expired 全分支覆盖，否则 P0-005 不允许 PASS。
+
+**Review 提交物**：本文件 Review 区块 + task-index P0-004 → PASS（review_pass_commit=3372df6）+ 复跑输出留档。

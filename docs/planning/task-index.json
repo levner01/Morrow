@@ -2,7 +2,7 @@
   "planning_version": "1.1",
   "milestone": "M1 = Phase 0 + MVP + 7 days real use",
   "implementation_status": "NOT_STARTED",
-  "next_task": "P0-004",
+  "next_task": "P0-005",
   "phase1_gate": "LOCKED: 14 days + 80% + owner confirmation",
   "tasks": [
     {
@@ -56,7 +56,7 @@
       "id": "P0-004",
       "title": "实现唯一Core的身份、事务、版本、审计与幂等框架",
       "phase": "Phase 0",
-      "status": "PLANNED",
+      "status": "PASS",
       "dependencies": [
         "P0-003"
       ],
@@ -64,7 +64,8 @@
       "executor": "Trae + Kimi K3",
       "reviewer": "Hermes + GLM-5.3 深审；WorkBuddy + DeepSeek V4.1 Flash 独立反例初审",
       "task_file": "tasks/P0-004.md",
-      "evidence_file": "evidence/P0-004/result.md"
+      "evidence_file": "evidence/P0-004/result.md",
+      "review_pass_commit": "3372df6"
     },
     {
       "order": 5,
