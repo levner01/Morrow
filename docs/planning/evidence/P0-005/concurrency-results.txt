@@ -1,0 +1,18 @@
+conc client: d1d70913-5215-40c6-840a-9e49815d5e5d
+T01 注：架构 T01 是 MVP 业务语义（不同锚点=不同业务键），M1 Phase0 无业务入口，改用不同 entity_key 并发验证互不影响
+seed(base) version: 1 | raw: [{"r":{"ok":true,"result":{"id":"5cf7fd14-8f7b-4bc1-a14c-281542ab3d88","result":"created","version":"1"},"replayed":false,"request_id":"97156cfc-21cf-481a-bfb6-373a9b5ecff2","server_time":"2026-09-18 
+versions: ok=20/20 unique=20 range=2..21 base=1 final=21
+PASS  T03_20concurrent_no_dup_versions
+occ client: b9c60c00-13e6-4521-9423-c194959a4b5f
+a=VERSION_CONFLICT b=ok final=22 (expected 22)
+PASS  T04_occ_single_winner
+second_call: {"ok":true,"result":{"id":"9a066df6-667f-401f-9f00-6d2fc08b6728","result":"created","version":"1"},"replayed":true,"request_id":"d00f05d5-9b12-4cb2-ac87-53673a47eee7","server_time":"2026-09-18 02:57:49.830804+00"} | life_rows=1 audit_rows(by resource_id)=1
+PASS  T05_lost_response_retry_one_change_no_dup_audit
+second_call: {"ok":false,"error":{"code":"IDEMPOTENCY_KEY_REUSED","details":null,"message":"同一幂等键绑定了不同请求内容","retryable":false,"request_id":"16f0c091-41c0-4009-87b9-fcfcc87f5150"}}
+PASS  T06_same_key_diff_input_409
+rev 333->333 receipts 85->85 life 7->7
+PASS  T07_fault_full_rollback
+after-tombstone: {"ok":false,"error":{"code":"RESOURCE_DELETED","details":{"resource_id":"26f462f4-16b3-402d-8a23-cbe1c383da1e"},"message":"业务键已删除（tombstone），不能 create 覆盖","retryable":false,"request_id":"28e745f6-2f48-4808-ab23-feb1ff39a67a"}}
+PASS  T08_tombstone_no_revive
+组1/组3 已被 T03(20并发同行)/S08(rotate‖revoke) 覆盖；组2 由 S08 client+create 并发覆盖（P0-004 K8 已证）
+{"life_left":0,"receipts_left":0,"clients_left":0}

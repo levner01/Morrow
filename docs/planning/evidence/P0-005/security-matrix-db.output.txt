@@ -1,0 +1,74 @@
+S01a_anon_life_data_denied
+{"message":"Failed to run sql query: ERROR:  42501: permission denied for table life_data\nHINT:  Grant the required privileges to the current role with: GRANT SELECT ON public.life_data TO anon;\n"}
+---
+S01b_anon_activity_denied
+{"message":"Failed to run sql query: ERROR:  42501: permission denied for table activity_log\nHINT:  Grant the required privileges to the current role with: GRANT SELECT ON public.activity_log TO anon;\n"}
+---
+S01c_anon_private_credentials_denied
+{"message":"Failed to run sql query: ERROR:  42501: permission denied for schema private\nLINE 1: begin; set local role anon; select 1 from private.agent_credentials limit 1; rollback;\n                                                  ^\n"}
+---
+S01d_anon_rpc_denied
+{"message":"Failed to run sql query: ERROR:  42501: permission denied for function get_workspace_revision_v1\n"}
+---
+S02a_probe_life_data_zero_rows
+[{"c":0}]
+---
+S02b_probe_activity_zero_rows
+[{"c":0}]
+---
+S02c_probe_rpc_owner_denied
+[{"r":{"ok":false,"error":{"code":"OWNER_DENIED","details":null,"message":"仅工作区 owner 可执行","retryable":false,"request_id":"ae40db86-3923-419b-98a4-f1924bc593d1"}}}]
+---
+S02d_probe_settings_zero
+[{"c":0}]
+---
+S03a_owner_direct_update_denied
+{"message":"Failed to run sql query: ERROR:  42501: permission denied for table life_data\nHINT:  Grant the required privileges to the current role with: GRANT UPDATE ON public.life_data TO authenticated;\n"}
+---
+S03b_owner_direct_delete_denied
+{"message":"Failed to run sql query: ERROR:  42501: permission denied for table activity_log\nHINT:  Grant the required privileges to the current role with: GRANT DELETE ON public.activity_log TO authenticated;\n"}
+---
+S03c_owner_semantic_rpc_ok
+[{"r":{"ok":true,"request_id":"5644dce4-0f4d-4953-a97a-304de7f25268","server_time":"2026-09-18 02:59:55.127675+00","data_revision":"347"}}]
+---
+S04a_forged_puid_probe_on_owner_session
+[{"r":{"ok":false,"error":{"code":"OWNER_DENIED","details":null,"message":"仅工作区 owner 可执行","retryable":false,"request_id":"bc0ca207-bd87-4720-8e01-bcaac61f4fe3"}}}]
+---
+S04b_insert_without_actor_rejected
+{"message":"Failed to run sql query: ERROR:  P0001: actor_context_missing\nCONTEXT:  PL/pgSQL function private.current_actor() line 6 at RAISE\nSQL statement \"select a.actor_type, a.actor_id                  from private.current_actor() a\"\nPL/pgSQL function private.trg_life_data_before_insert() line 5 at SQL statement\n"}
+---
+S04c_actor_overrides_declared_source
+[{"source_type":"human","sid":"f986333c-0ba0-41b5-b44b-41e52535c5f5"}]
+---
+S05a_owner_cannot_read_credentials
+{"message":"Failed to run sql query: ERROR:  42501: permission denied for table agent_credentials\nHINT:  Grant the required privileges to the current role with: GRANT SELECT ON private.agent_credentials TO authenticated;\n"}
+---
+S05b_owner_cannot_read_receipts
+{"message":"Failed to run sql query: ERROR:  42501: permission denied for table request_receipts\nHINT:  Grant the required privileges to the current role with: GRANT SELECT ON private.request_receipts TO authenticated;\n"}
+---
+S05c_agent_clients_rls_on
+[{"c":1}]
+---
+  get_command_result_v1: anon=false authenticated=true service_role=false
+  get_workspace_revision_v1: anon=false authenticated=true service_role=false
+  initialize_workspace_v1: anon=false authenticated=true service_role=false
+  manage_health_client_v1: anon=false authenticated=true service_role=false
+  private cmd_initialize_workspace_v1: anon=false authenticated=true service_role=false
+  private is_workspace_owner: anon=false authenticated=true service_role=false
+  private cmd_get_command_result_v1: anon=false authenticated=true service_role=false
+  private cmd_get_workspace_revision_v1: anon=false authenticated=true service_role=false
+  private cmd_manage_health_client_v1: anon=false authenticated=true service_role=false
+PASS  S06_private_whitelist_exact
+S07a_no_expired_creds_lingering
+[{"c":0}]
+---
+（S07 Edge 侧过期/撤销 token 实测属 P0-007 health 端到端）
+client created: 574c8d59-4060-4233-bea5-5afde47dc416
+revoke: {"ok":true,"result":{"target":"client","version":"2","client_id":"574c8d59-4060-4233-bea5-5afde47dc416","no_change":false,"revoked_at":"2026-09-18T03:00:26.431293+00:00"},"replayed":false,"request_id":"8947734d-ffd9-4161-993c-adea5d4292b3","server_time":"2026-09-18 03:00:26.431293+00"}
+rotate: {"ok":false,"error":{"code":"RESOURCE_DELETED","details":null,"message":"client 已撤销，不能轮换","retryable":false,"request_id":"b7500371-02e1-445f-b1f8-9be288d40d7e"}}
+{"ok":true,"result":{"target":"client","version":"2","client_id":"574c8d59-4060-4233-bea5-5afde47dc416","no_change":false,"revoked_at":"2026-09-18T03:00:26.431293+00:00"},"replayed":false,"request_id":"8947734d-ffd9-4161-993c-adea5d4292b3","server_time":"2026-09-18 03:00:26.431293+00"}
+[{"live_creds":0}]
+S09_receipt_no_token_hash
+[{"c":0}]
+---
+{"c":0}

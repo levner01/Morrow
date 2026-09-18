@@ -1,0 +1,6 @@
+client: 88cccf07-25f0-42fc-8584-9d0845aaeb23
+call1+expired+call2(trapped):
+{"j":{"ok":true,"result":{"id":"89ede141-5e9b-4356-8a9a-e737c4356e8d","result":"created","version":"1"},"replayed":false,"request_id":"50b1d95c-10d6-4c14-872a-46128cbd7632","server_time":"2026-09-18 03:01:28.298414+00"}}
+{"j":{"msg":"receipt_state_invalid","caught_error":"P0001"}}
+{"j":{"note_written":true}}
+P1: core_test_write_v1 缺 expired 分支，违反 C-04「超期返回409绝不重跑」
