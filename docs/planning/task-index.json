@@ -2,7 +2,7 @@
   "planning_version": "1.1",
   "milestone": "M1 = Phase 0 + MVP + 7 days real use",
   "implementation_status": "NOT_STARTED",
-  "next_task": "P0-005",
+  "next_task": "P0-006",
   "phase1_gate": "LOCKED: 14 days + 80% + owner confirmation",
   "tasks": [
     {
@@ -72,7 +72,7 @@
       "id": "P0-005",
       "title": "用独立安全与并发测试封住核心风险",
       "phase": "Phase 0",
-      "status": "PLANNED",
+      "status": "PASS",
       "dependencies": [
         "P0-004"
       ],
@@ -80,7 +80,8 @@
       "executor": "Hermes + GLM-5.3",
       "reviewer": "WorkBuddy + Kimi K3；原实现作者修复后Hermes重新验证",
       "task_file": "tasks/P0-005.md",
-      "evidence_file": "evidence/P0-005/result.md"
+      "evidence_file": "evidence/P0-005/result.md",
+      "review_pass_commit": "17f3167"
     },
     {
       "order": 6,

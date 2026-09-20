@@ -100,3 +100,13 @@ expired-defect.sh 三次独立复跑均稳定：identical-input expired receipt 
 2. P1 缺陷同步移交原作者（Trae + Kimi K3）修复 migration 0011，本卡复验后收口
 3. 凯哥 Dashboard 确认孤儿 PROBE_TOKEN secret 删除
 4. task-index 未动（Review 方签核后才 transition）
+## Review 复验（Review 方: Hermes GLM-5.3，修复后全程实测，2026-09-20）
+
+1. `0011` migration 已应用（pg_proc 函数体含 `IDEMPOTENCY_RESULT_EXPIRED` 分支，官方证据 мной复测）
+2. 核心复现链：fresh key → 成功(RESOURCE_NOT_FOUND→揭示本卡"修复前"路径) → 强制 expired → 同key同input 重调 → **`IDEMPOTENCY_RESULT_EXPIRED` 返回(收据messageEXPIRED)**，无 P0001 穿透 / 无业务穿透（`life_data` 行数与 receipt_count 不变）——两者与 K3 报告完全一致，C-04 语义成立
+3. 无删残（我清理了从fresh key的这个Fragable test harness），保证了 p0test 键 + contracts 保留件, data_revision 看 26 时点级别
+4. 版本触发器仍按 P0-004 实测一致（version 24→25），无回归
+
+P0-003 复检项 expired 返回语义 = 对应合同 C-04/HTTP 409 同位验证 PASS。
+
+结论: 0011 修复正式有效，代码/DB/合同三层一致。**P0-005 复验 PASS。**
