@@ -1,0 +1,50 @@
+{
+  "release": {
+    "id": "p0-006-9fd1020e12c8",
+    "built_at_utc": "2026-09-20T09:24:52.265Z",
+    "reproducibility_note": "dist/index.html 不含时间戳；同一源输入两次构建 SHA256 必相同。复现校验请排除本字段 built_at_utc。"
+  },
+  "source_files": [
+    {
+      "path": "assets/css/app.css",
+      "sha256": "16fb73b0c3bbab6dd3e3a25f4c941909cdd7b9b782d33f2eb11a8368f13d192c"
+    },
+    {
+      "path": "assets/vendor/supabase-js@2.116.0.umd.js",
+      "sha256": "84ee9bf45695c1dd3ba1595b6bcfb0f09672434631351ffc8ebe9140545d5ff6"
+    },
+    {
+      "path": "assets/js/config.js",
+      "sha256": "95cb9399ce6358485f36bb8c9815b346332cde360770f14ff216d9109fd479aa"
+    },
+    {
+      "path": "assets/js/transport.js",
+      "sha256": "ba702322ab3192c9d9cc1ae7c47902a76018c589960494e921adbff1b8ff0411"
+    },
+    {
+      "path": "assets/js/drafts.js",
+      "sha256": "164fd88d5ca9386816dfd5f96af8471a353aa20cce4b93d2682f1cbc3a63f16c"
+    },
+    {
+      "path": "assets/js/ui.js",
+      "sha256": "e0c7c08160d7b2cc08844411faf649247f6867c140331bfd0826984f195d4c8c"
+    },
+    {
+      "path": "assets/js/app.js",
+      "sha256": "9b602036162e72fdb6bd7fee3366cdbb44a9441bbe569beeb86b6988c6dd4dcd"
+    }
+  ],
+  "source_sha256": "9fd1020e12c8d1c63d15faf574f3ffb72c5c2803aa0e0711f65f2c983b189ee9",
+  "sdk": {
+    "name": "@supabase/supabase-js",
+    "version": "2.116.0",
+    "file": "assets/vendor/supabase-js@2.116.0.umd.js",
+    "sha256": "84ee9bf45695c1dd3ba1595b6bcfb0f09672434631351ffc8ebe9140545d5ff6",
+    "license": "MIT"
+  },
+  "entry_source": "index.html",
+  "dist": {
+    "path": "dist/index.html",
+    "sha256": "c07b0f832bb1ae291bff6e072052da81b147bcefd8c3610a56bd1be9029251dd"
+  }
+}

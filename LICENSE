@@ -1,0 +1,37 @@
+Morrow 个人生活工作台 — 许可证与第三方归属
+
+1. 本项目（Morrow）
+   版权所有 (c) 2026 王凯（凯哥）。保留所有权利。
+   个人使用项目，当前不授予第三方使用、复制、修改或分发许可（UNLICENSED）。
+   仓库代码仅在获得所有者明确授权后使用。
+
+2. 第三方组件归属（vendored，自托管于 assets/vendor/）
+
+   @supabase/supabase-js 2.116.0
+   - 来源：https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js
+   - 本仓库文件：assets/vendor/supabase-js@2.116.0.umd.js
+   - SHA256：84ee9bf45695c1dd3ba1595b6bcfb0f09672434631351ffc8ebe9140545d5ff6
+   - 许可证：MIT License
+   - 版权所有 (c) Supabase, Inc.
+   - 许可原文（MIT）：
+
+     Permission is hereby granted, free of charge, to any person obtaining a copy
+     of this software and associated documentation files (the "Software"), to deal
+     in the Software without restriction, including without limitation the rights
+     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+     copies of the Software, and to permit persons to whom the Software is
+     furnished to do so, subject to the following conditions:
+     The above copyright notice and this permission notice shall be included in all
+     copies or substantial portions of the Software.
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+     SOFTWARE.
+
+3. 密钥与凭据声明
+   本仓库任何文件（含 dist/ 发行物与 release manifest）均不含 publishable key、
+   access/refresh token、service_role、密码或 Agent token。运行时配置仅由使用者在
+   本机浏览器存储中提供。
