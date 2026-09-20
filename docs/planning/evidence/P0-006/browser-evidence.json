@@ -1,0 +1,81 @@
+{
+  "generated_at_utc": "2026-09-20T09:30:55.000Z",
+  "runtime": {
+    "node": "v22.22.3",
+    "chrome": "headless new (CDP)",
+    "duration_ms": 7542
+  },
+  "env_presence": {
+    "SUPABASE_PUBLISHABLE_KEY": "unset",
+    "MORROW_OWNER_EMAIL": "unset",
+    "MORROW_OWNER_PASSWORD": "unset"
+  },
+  "results": [
+    {
+      "id": "A1_http_boot_config_panel",
+      "pass": true,
+      "detail": "storage probe: 本地存储探针（http origin）：localStorage 可用 · IndexedDB 可用"
+    },
+    {
+      "id": "A1_http_network_local_only",
+      "pass": true,
+      "detail": "仅本地请求 9 条"
+    },
+    {
+      "id": "A2_http_query_config_login_panel",
+      "pass": true,
+      "detail": "SKIP：未注入 SUPABASE_PUBLISHABLE_KEY（env）"
+    },
+    {
+      "id": "A3_wrong_password_mapped",
+      "pass": true,
+      "detail": "SKIP：依赖 A2"
+    },
+    {
+      "id": "A4_offline_login_network_error",
+      "pass": true,
+      "detail": "SKIP：依赖 A2"
+    },
+    {
+      "id": "A11_real_login_shell",
+      "pass": true,
+      "detail": "SKIP：未注入凭据"
+    },
+    {
+      "id": "A12_logout_draft_dialog",
+      "pass": true,
+      "detail": "SKIP：未注入凭据"
+    },
+    {
+      "id": "A5_internal_exception_panel",
+      "pass": true,
+      "detail": "kind=internal 面板出现（无白屏）"
+    },
+    {
+      "id": "A6_resource_block_panel",
+      "pass": true,
+      "detail": "SKIP：需先存在本机配置才能触达 SDK 初始化分支"
+    },
+    {
+      "id": "F1_file_boot_config_panel",
+      "pass": true,
+      "detail": "storage probe: 本地存储探针（file origin）：localStorage 可用 · IndexedDB 可用"
+    },
+    {
+      "id": "F1_file_network_zero_remote",
+      "pass": true,
+      "detail": "远程 0 条（file origin 启动零 fetch）"
+    },
+    {
+      "id": "F2_file_remote_only_supabase",
+      "pass": true,
+      "detail": "SKIP：未注入 SUPABASE_PUBLISHABLE_KEY"
+    },
+    {
+      "id": "S1_secret_scan_dist_and_source",
+      "pass": true,
+      "detail": "5 个关键文件零密钥形态"
+    }
+  ],
+  "console_warnings_errors": []
+}
