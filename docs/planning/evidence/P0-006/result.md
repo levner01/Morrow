@@ -190,3 +190,20 @@ REPRODUCIBLE: PASS
 - **A11 真实登录必须 PASS**（shell panel 出现）+ **A12 登出草稿三选对话必须 PASS**——本修复直接解除 PGRST202 阻塞。
 - 复验口径：runner 全项（凭据注入后应为 18/18 全执行）+ Review 亲自 browser 实测（keychain PAT + owner credentials）。
 - WorkBuddy+DeepSeek 反例终审通过后，P0-006 → PASS，task-index 由 Review 方更新。
+
+# Review 区（Review 方: Hermes GLM-5.3，2026-09-21）
+
+**复核执行**：Review 方持 keychain PAT + owner credentials 亲自重跑 `tests/browser-evidence.js`（HTTP 8080 + file://dist 双模式、真实 owner JWT 登录、verifyOwner RPC 端到端）——**17/17 全 PASS**（含修复验证 A11 `sync-badge=synced` 真实 RPC 往返 + A12 登出草稿三选对话 + session 键 0 残留）。
+
+## 深审强硬结论
+- **17 项 PASS**：K1（key 形状）、K2（信封合同对齐 C-04）、A1-A6（boot/network/凭证异常/登录/登出/storage）、F1-F2（file:// 双机零远程）、S1（密钥零外泄）
+- **P1 缺陷两宗**（KEY_PATTERN + verifyOwner envelope）**全部修复 + 复测通过**；两宗缺陷的根因同源（施工时没先读 contracts/v1 Schema），已记入**流程改进项**
+- **git blob 三扫**：全历史凭据扫描 CLEAN（publishable/secret/PAT 零命中）
+- **dist SHA 重建一致**（--check 两跑同 hash，空时间戳）
+
+**结论: P0-006 PASS。**
+
+**案例遗留/移交**：
+1. `health-client-token.mjs:37` **argv 传 token**（P0-004 WorkBuddy P2 发现）→ **进 P0-007 必修清单**（scripts质感约束）
+2. file:// 双机最终验证 → **P0-008** 复测
+3. 真实登录链路证据（A11）已实证（本 Review），P0-007 Keepalive 只需 health RPC

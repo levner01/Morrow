@@ -2,7 +2,7 @@
   "planning_version": "1.1",
   "milestone": "M1 = Phase 0 + MVP + 7 days real use",
   "implementation_status": "NOT_STARTED",
-  "next_task": "P0-006",
+  "next_task": "P0-007",
   "phase1_gate": "LOCKED: 14 days + 80% + owner confirmation",
   "tasks": [
     {
@@ -88,7 +88,7 @@
       "id": "P0-006",
       "title": "建立可降级静态登录壳和同源单HTML发行",
       "phase": "Phase 0",
-      "status": "PLANNED",
+      "status": "PASS",
       "dependencies": [
         "P0-005"
       ],
@@ -96,7 +96,8 @@
       "executor": "Trae + Kimi K2.7 Code",
       "reviewer": "WorkBuddy + DeepSeek V4.1 Flash；Hy4检查失败页面",
       "task_file": "tasks/P0-006.md",
-      "evidence_file": "evidence/P0-006/result.md"
+      "evidence_file": "evidence/P0-006/result.md",
+      "review_pass_commit": "009397c"
     },
     {
       "order": 7,
