@@ -10,7 +10,7 @@
 
   const STORAGE_KEY = 'morrow.config.v1';
   // publishable key 形如 sb_publishable_xxx（≥16 位载荷）；兼容旧 anon JWT（eyJ...三段）。
-  const KEY_PATTERN = /^(sb_publishable_[A-Za-z0-9]{16,}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/;
+  const KEY_PATTERN = /^(sb_publishable_[A-Za-z0-9_-]{16,}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/;
   const URL_PATTERN = /^https:\/\/[a-z0-9][a-z0-9-]*\.supabase\.co$/i;
 
   function validate(url, key) {

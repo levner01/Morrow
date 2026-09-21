@@ -144,7 +144,8 @@ async function newPage(browser) {
 }
 
 async function goto(page, url) {
-  await page.browser.send('Page.navigate', { url: redact(url) }, page.sessionId);
+  // 导航必须用原始 URL；redact 只发生在记录（network 捕获处已做），否则会把 key 替换成字面 <redacted> 导致页面拿到假值
+  await page.browser.send('Page.navigate', { url: url }, page.sessionId);
 }
 
 async function evalJs(page, expression, awaitPromise = false) {
@@ -190,6 +191,27 @@ async function closePage(page) {
 }
 
 // ---------- 场景 ----------
+// K1（P0-006-fix 回归）：46 位、首字符为 '-'、含 '_'/'-' 的 publishable key 形态必须被接受并到达登录面板。
+// 使用合成形态 key（非真实凭据）：验证 white-list 字符类修复；断言 DOM 出现 login-panel。
+async function scenarioKeyShapeProbe() {
+  const syntheticKey = 'sb_publishable_-K7zqA9vW2mL4pN8rT5yU3wx_QvJcXgHz'; // 合成，形态等价
+  const page = await newPage(browser);
+  await goto(
+    page,
+    `${HTTP_BASE}/index.html?sb_url=${encodeURIComponent(PROJECT_URL)}&sb_key=${encodeURIComponent(syntheticKey)}`
+  );
+  await waitFor(page, `!!document.querySelector('[data-testid="login-panel"]')`, 12000, 'login panel (synthetic 46-char key)');
+  const problems = await evalJs(page, `document.querySelectorAll('[data-testid="config-problems"] li').length`);
+  const hasPanel = await evalJs(page, `!!document.querySelector('[data-testid="login-panel"]')`);
+  record(
+    'K1_key_shape_46char_leading_dash',
+    hasPanel && problems === 0,
+    'login-panel=' + hasPanel + '；config-problems li=' + problems + '（sb_key 合成已 redact）'
+  );
+  await evalJs(page, `localStorage.clear()`); // 恢复无配置态，避免污染后续 A1
+  await closePage(page);
+}
+
 async function scenarioHttpBoot() {
   const page = await newPage(browser);
   await goto(page, `${HTTP_BASE}/index.html`);
@@ -357,6 +379,9 @@ async function main() {
     '--no-first-run',
     '--disable-extensions',
     '--disable-background-networking',
+    '--password-store=basic', // 避免 headless 触碰本机登录钥匙串（CI 标准做法）
+    '--use-mock-keychain',
+    '--disable-sync',
     '--window-size=1280,900',
     'about:blank',
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
@@ -380,6 +405,7 @@ async function main() {
 
   const t0 = Date.now();
   try {
+    await scenarioKeyShapeProbe();
     await scenarioHttpBoot();
     await scenarioFileDist();
     await scenarioSecretScan();

@@ -94,3 +94,47 @@ PASS  F2_file_remote_only_supabase  — SKIP：未注入 SUPABASE_PUBLISHABLE_KE
 PASS  S1_secret_scan_dist_and_source  — 5 个关键文件零密钥形态
 == 汇总: 13/13 通过 ==
 ```
+
+---
+
+## P0-006-fix：KEY_PATTERN 拒绝真实 publishable key（P1，Review 移交）
+
+### 缺陷与根因
+- `assets/js/config.js:13` 的 `KEY_PATTERN` 载荷字符类 `[A-Za-z0-9]` 不含 `_-`；真实 publishable key（46 位、首字符为 `-`）被 `validate()` 拒绝，`consumeQueryParams()` 静默不写 storage → 应用停在 config-panel，无法进入登录页。
+- 影响：A2/A3/A4/A6/A11/F2 全部被挡；P0-008 双机亦过不去。
+
+### 修复（最小改动，一行）
+```js
+// 前
+const KEY_PATTERN = /^(sb_publishable_[A-Za-z0-9]{16,}|eyJ…)$/;
+// 后（仅载荷字符类加 _-）
+const KEY_PATTERN = /^(sb_publishable_[A-Za-z0-9_-]{16,}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/;
+```
+URL_PATTERN / problems 文案 / consumeQueryParams / writeStorage 全部原样未动。
+
+### dist 重打 + 复现性（命令与原始输出）
+```text
+$ node scripts/package-html.js
+[package-html] release p0-006-7e099f6f7124
+[package-html] dist/index.html sha256 266752d0292ee1f0114f673580e03b15c512b8d1bcf83145deac8f64300decce
+[package-html] manifest  -> dist/release-manifest.json
+
+$ node scripts/package-html.js --check
+[package-html --check] published 266752d0292ee1f0114f673580e03b15c512b8d1bcf83145deac8f64300decce
+[package-html --check] rebuilt    266752d0292ee1f0114f673580e03b15c512b8d1bcf83145deac8f64300decce
+REPRODUCIBLE: PASS
+```
+
+### 验证
+1. 正则形态单测（Node 内联，合成样本非真实凭据）：
+   - 46 位形态、首字符 `-`（`sb_publishable_-x9_QvW3zK7pL2mN8rT4yU6w…`）→ match=true
+   - 15 位短载荷 → false；eyJ 三段 JWT → true
+2. 回归场景 K1（进 `tests/browser-evidence.js`，Chrome headless CDP，合成形态 key 经 `?sb_url=&sb_key=` 注入）：断言 DOM 出现 `data-testid="login-panel"` 且无 `config-problems`。实测输出：`login-panel=true；config-problems li=0（sb_key 合成已 redact）`。
+3. 全量重跑：**14/14 通过**（原 13 项 + K1），原始记录已更新至 [browser-evidence.json](browser-evidence.json)。
+
+### 修复过程中发现并修正的 runner 自身缺陷（非 App 代码）
+- `tests/browser-evidence.js` 的 `goto()` 曾先 `redact(url)` 再导航——真实 key 会被替换成字面 `<redacted>` 传给页面，A2/F2 即使注入真 key 也会失败。已改为：导航用原始 URL，redact 只作用于记录侧（network 捕获处本就独立 redact）。该缺陷属测试工具链，App 交付代码未因此改动。
+
+### 仍待 Hermes 复验（真实凭据注入后）
+- A2/A3/A4/A6/A11/A12/F2 真实网络路径（runner 已就绪，`goto()` 修复后真实 key 可直达页面）。
+- 复验口径：runner 全 14 项 + Review 亲自 browser 实测。

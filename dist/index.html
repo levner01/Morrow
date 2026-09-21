@@ -7,7 +7,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Morrow · 登录</title>
 <meta name="description" content="Morrow 单用户生活工作台 — Phase 0 登录壳（P0-006）">
-<!-- Morrow 发行 p0-006-9fd1020e12c8 · 源 SHA256 9fd1020e12c8d1c63d15faf574f3ffb72c5c2803aa0e0711f65f2c983b189ee9 · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
+<!-- Morrow 发行 p0-006-7e099f6f7124 · 源 SHA256 7e099f6f71244e560600cf9e9e7aad833c935b44d82a0801f3ad3c8e747b6198 · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
 <style>
 /* ---- assets/css/app.css ---- */
 /* Morrow 登录壳样式（P0-006）：原生 CSS Grid，系统字体栈，零远程字体。
@@ -213,7 +213,7 @@ html.morrow-booted #boot-fallback { display: none; }
 
 
 <script>
-window.MORROW_RELEASE={"id":"p0-006-9fd1020e12c8","source_sha256":"9fd1020e12c8d1c63d15faf574f3ffb72c5c2803aa0e0711f65f2c983b189ee9","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
+window.MORROW_RELEASE={"id":"p0-006-7e099f6f7124","source_sha256":"7e099f6f71244e560600cf9e9e7aad833c935b44d82a0801f3ad3c8e747b6198","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
 </script>
 <script>
 /* ---- assets/vendor/supabase-js@2.116.0.umd.js ---- */
@@ -242,7 +242,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
   const STORAGE_KEY = 'morrow.config.v1';
   // publishable key 形如 sb_publishable_xxx（≥16 位载荷）；兼容旧 anon JWT（eyJ...三段）。
-  const KEY_PATTERN = /^(sb_publishable_[A-Za-z0-9]{16,}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/;
+  const KEY_PATTERN = /^(sb_publishable_[A-Za-z0-9_-]{16,}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/;
   const URL_PATTERN = /^https:\/\/[a-z0-9][a-z0-9-]*\.supabase\.co$/i;
 
   function validate(url, key) {
