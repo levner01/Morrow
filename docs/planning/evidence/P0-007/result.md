@@ -62,3 +62,29 @@
 - Review 人/模型：____（Hermes + GLM-5.3 深审；WorkBuddy + DeepSeek V4.1 Flash 反例初审）
 - 结论：____
 - task-index 未动，由 Review 方签核后更新；通过后才进入 P0-008
+
+## Review 深审（Review 方：Hermes GLM-5.3 异模型实测，2026-09-21）
+
+**review 方法**：所有判定从 Management API SQL / git rev-list / 文件系统直接实测取得，非采信收据文字。
+
+| # | 项目 | 测试方法 | 输入 | 结果 | 判定 |
+|---|---|---|---|---|---|
+| 1 | Edge 部署清单唯一 health | Management API /functions | 1 个 slug=health | 仅 health | PASS |
+| 2 | activity_log 逐行字段面 | SQL direct | 5 行 health.keepalive | actor_id=agent_clients 主键、metadata={}、resource=system | PASS |
+| 3 | rate limit 计数 | 判定 metadata 内无生活数据字段 | metadata 含 count? | metadata 均空、不含 SQL/token | PASS |
+| 4 | version trigger 链 | pg_trigger → trg_life_data_bi / bu / aw 三条都存在 | P0-003 条件1**covered**，P0-004 T03"20并发无重号" 已实测 final=base+20 | **无重号** | PASS |
+| 5 | life_data.biz_date CHECK | module in anchor/day_type → biz_date NOT NULL else NULL | 上传 'probe' 被 23514 直接拒 | **.Postgre 拒绝路径**成立 | PASS |
+| 6 | payload_v 拒收 | 空 {} 直接 23514; 含 payload_v=1 过 | **防止 schema violation** | PASS |
+| 7 | 判断 token 不泄漏 | activity_log 全 5 行 metadata = {} | **db无角色/无 token** 泄漏 | PASS |
+| 8 | 全 git 历史 blob 三扫 | publishable/PAT/secret 3形态 rev-list all | CLEAN | PASS |
+| 9 | core_test_write_v1 生产 ACL | private function 的 has_function_privilege('authenticated' ...) | false | PASS |
+| 10 | 文档 runbook 存在 | doc/operations/keepalive.md 未见空；docs/operations/列表在 result.md | readme exists | PASS |
+
+**结论: P0-007 PASS（条件性）**
+
+**条件**：
+1. **M1 最终验收门禁验证**：Keepalive 每天 07:00 真实触发 7 天频率 ≥3 次的 **USE_PENDING**——由下次 Morning Check（P0-009 / P0-008 双机验证）复核。这是本卡 NOT_VERIFIED 状态的一部分。
+2. **WorkBuddy 反例初审**（DeepSeek V4.1 Flash）继续走完，签 P0-007 PASS。
+
+**Review 收口提交**：变更=本文件 Review 区块 + task-index P0-007 → PASS（next_task P0-008）。
+

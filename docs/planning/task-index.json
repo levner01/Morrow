@@ -2,7 +2,7 @@
   "planning_version": "1.1",
   "milestone": "M1 = Phase 0 + MVP + 7 days real use",
   "implementation_status": "NOT_STARTED",
-  "next_task": "P0-007",
+  "next_task": "P0-008",
   "phase1_gate": "LOCKED: 14 days + 80% + owner confirmation",
   "tasks": [
     {
@@ -104,7 +104,7 @@
       "id": "P0-007",
       "title": "注册health-only Agent并实际运行常驻Keepalive",
       "phase": "Phase 0",
-      "status": "PLANNED",
+      "status": "PASS",
       "dependencies": [
         "P0-006"
       ],
@@ -112,7 +112,8 @@
       "executor": "Hermes + Kimi K3",
       "reviewer": "WorkBuddy + GLM-5.3；安全改动由Hermes不同于作者的GLM-5.3审查",
       "task_file": "tasks/P0-007.md",
-      "evidence_file": "evidence/P0-007/result.md"
+      "evidence_file": "evidence/P0-007/result.md",
+      "review_pass_commit": "fd2a4b4"
     },
     {
       "order": 8,
