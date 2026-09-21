@@ -1,15 +1,24 @@
 // P0-007｜health-only Agent Edge adapter（M1 唯一开放的 Agent 路由）
 // 合同：02-contracts.md C-06（health 独立函数、仅 GET、错误模型、5 req/min/client）
 //
+// 认证模型（双因子，需求方 P0-007 提示词口径）：
+//   1. 明文 token 与 Edge Secret `MORROW_AGENT_TOKEN` 做常数时间比较（Deno.env.get）
+//   2. SHA-256(token) 经 PostgREST RPC 匹配 private.agent_credentials.token_hash
+//      （DB 侧同时判 revoked_at / expires_at / client.enabled / scopes 与限流）
+//   两者都过才放行；任一失败统一 401 UNAUTHENTICATED（不区分原因，防探针）。
+//   注：这使 C-05.1 rotate 的 24h 旧凭据窗口在 Edge 层提前关闭——轮换流程必须
+//   同步更新 Edge secret（runbook 已写）；DB 撤销在任何情况下都即时生效。
+//
 // 纪律：
-// - 仅接受 GET；其余 method → 405
-// - Bearer token 只做 SHA-256 摘要后经 PostgREST RPC 送库比对；token 明文不进日志/响应
-// - 缺失/错配/过期/撤销一律 401 UNAUTHENTICATED（不区分原因，防探针）
-// - 错误 message 不含 token、不含 SQL、不含内部对象细节
-// - 25s 显式 deadline（躲 Keepalive 宿主 30s 总 deadline）
+// - 仅 GET；其余 method → 405
+// - token/hash 明文与摘要都不进日志、不进响应；错误 message 不含 SQL
+// - 响应体纯 JSON；成功只含合同字段 ok/status/db/server_time/request_id
+// - 内部 deadline 25s（躲宿主 Keepalive 30s buffer）
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+// trim：Dashboard 粘贴/剪贴板常带入尾部换行；只容忍 secret 存储侧空白，不放松请求侧校验
+const EXPECTED_TOKEN = Deno.env.get('MORROW_AGENT_TOKEN')?.trim();
 const DEADLINE_MS = 25_000;
 
 function jsonResponse(status: number, body: unknown, extraHeaders: Record<string, string> = {}) {
@@ -20,12 +29,30 @@ function jsonResponse(status: number, body: unknown, extraHeaders: Record<string
 }
 
 function errBody(code: string, message: string, requestId: string) {
-  return { ok: false, error: { code, message, retryable: code === 'RATE_LIMITED' || code === 'STORAGE_UNAVAILABLE', request_id: requestId } };
+  return {
+    ok: false,
+    error: {
+      code,
+      message,
+      retryable: code === 'RATE_LIMITED' || code === 'STORAGE_UNAVAILABLE',
+      request_id: requestId,
+    },
+  };
 }
 
 async function sha256Hex(text: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 常数时间比较，防时序侧信道
+function safeEqual(a: string, b: string): boolean {
+  const ea = new TextEncoder().encode(a);
+  const eb = new TextEncoder().encode(b);
+  if (ea.length !== eb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ea.length; i++) diff |= ea[i] ^ eb[i];
+  return diff === 0;
 }
 
 Deno.serve(async (req: Request) => {
@@ -34,22 +61,17 @@ Deno.serve(async (req: Request) => {
   if (req.method !== 'GET') {
     return jsonResponse(405, errBody('METHOD_NOT_ALLOWED', '仅支持 GET', requestId), { allow: 'GET' });
   }
-  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !EXPECTED_TOKEN) {
     return jsonResponse(503, errBody('STORAGE_UNAVAILABLE', '上游暂不可用', requestId));
   }
 
   const auth = req.headers.get('authorization') ?? '';
   const match = /^Bearer\s+(\S+)\s*$/.exec(auth);
-  if (!match) {
+  if (!match || !safeEqual(match[1], EXPECTED_TOKEN)) {
     return jsonResponse(401, errBody('UNAUTHENTICATED', '无效凭据', requestId));
   }
 
-  let tokenHash: string;
-  try {
-    tokenHash = await sha256Hex(match[1]);
-  } catch {
-    return jsonResponse(401, errBody('UNAUTHENTICATED', '无效凭据', requestId));
-  }
+  const tokenHash = await sha256Hex(match[1]);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DEADLINE_MS);

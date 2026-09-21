@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- P0-007｜宿主 Keepalive launchd 配置（脱敏副本；真实安装路径 ~/Library/LaunchAgents/com.morrow.keepalive.plist）
-     - 每日 07:00（宿主机本地时区 Asia/Shanghai）触发；RunAtLoad 保证每次开机/载入补跑一次
+<!-- P0-007｜宿主 Keepalive launchd 模板（本文件为入库模板；真实安装路径
+     ~/Library/LaunchAgents/com.morrow.keepalive.plist，安装/载入属需求方动作）
+     - 每日 07:00（宿主机本地时区 Asia/Shanghai）触发；RunAtLoad 保证载入/开机补跑一次
      - 进程零密码明文：token 由 scripts/keepalive-runner.sh 运行时从 keychain 读取
-     - 安装/启动属需求方动作：
-         cp docs/operations/com.morrow.keepalive.plist ~/Library/LaunchAgents/
+     - 安装命令：
+         cp scripts/com.morrow.keepalive.plist ~/Library/LaunchAgents/
          launchctl load ~/Library/LaunchAgents/com.morrow.keepalive.plist
 -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -31,8 +32,8 @@
     <string>Asia/Shanghai</string>
   </dict>
   <key>StandardOutPath</key>
-  <string>/Users/wangxinkai/Library/Logs/morrow-keepalive.out.log</string>
+  <string>/tmp/morrow-keepalive.log</string>
   <key>StandardErrorPath</key>
-  <string>/Users/wangxinkai/Library/Logs/morrow-keepalive.err.log</string>
+  <string>/tmp/morrow-keepalive.log</string>
 </dict>
 </plist>
