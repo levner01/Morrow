@@ -153,10 +153,16 @@
   }
 
   // 轻量权威验证：经 Core 只读 RPC 证明 JWT + owner allowlist + 网络全通。
+  // 合同（C-04）：public RPC 统一收单参数 p_envelope jsonb = {api_version, idempotency_key, input}。
   async function verifyOwner() {
     if (!client) return { ok: false, error: { kind: 'internal', text: '客户端未初始化', retryable: false } };
     try {
-      const res = await client.rpc('get_workspace_revision_v1', {});
+      const envelope = {
+        api_version: '1',
+        idempotency_key: window.crypto.randomUUID(),
+        input: {},
+      };
+      const res = await client.rpc('get_workspace_revision_v1', { p_envelope: envelope });
       if (res.error) {
         return { ok: false, error: normalizeError(res.error) };
       }

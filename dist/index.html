@@ -7,7 +7,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Morrow · 登录</title>
 <meta name="description" content="Morrow 单用户生活工作台 — Phase 0 登录壳（P0-006）">
-<!-- Morrow 发行 p0-006-7e099f6f7124 · 源 SHA256 7e099f6f71244e560600cf9e9e7aad833c935b44d82a0801f3ad3c8e747b6198 · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
+<!-- Morrow 发行 p0-006-15bb333e567b · 源 SHA256 15bb333e567bc574059200b43f2dcb05d4e03fb1132296c6f2fed4ec5a6aa2e4 · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
 <style>
 /* ---- assets/css/app.css ---- */
 /* Morrow 登录壳样式（P0-006）：原生 CSS Grid，系统字体栈，零远程字体。
@@ -213,7 +213,7 @@ html.morrow-booted #boot-fallback { display: none; }
 
 
 <script>
-window.MORROW_RELEASE={"id":"p0-006-7e099f6f7124","source_sha256":"7e099f6f71244e560600cf9e9e7aad833c935b44d82a0801f3ad3c8e747b6198","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
+window.MORROW_RELEASE={"id":"p0-006-15bb333e567b","source_sha256":"15bb333e567bc574059200b43f2dcb05d4e03fb1132296c6f2fed4ec5a6aa2e4","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
 </script>
 <script>
 /* ---- assets/vendor/supabase-js@2.116.0.umd.js ---- */
@@ -467,10 +467,16 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   }
 
   // 轻量权威验证：经 Core 只读 RPC 证明 JWT + owner allowlist + 网络全通。
+  // 合同（C-04）：public RPC 统一收单参数 p_envelope jsonb = {api_version, idempotency_key, input}。
   async function verifyOwner() {
     if (!client) return { ok: false, error: { kind: 'internal', text: '客户端未初始化', retryable: false } };
     try {
-      const res = await client.rpc('get_workspace_revision_v1', {});
+      const envelope = {
+        api_version: '1',
+        idempotency_key: window.crypto.randomUUID(),
+        input: {},
+      };
+      const res = await client.rpc('get_workspace_revision_v1', { p_envelope: envelope });
       if (res.error) {
         return { ok: false, error: normalizeError(res.error) };
       }

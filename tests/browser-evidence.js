@@ -212,6 +212,29 @@ async function scenarioKeyShapeProbe() {
   await closePage(page);
 }
 
+// K2（P0-006-fix2 回归）：verifyOwner 的 RPC 参数包形状必须与 C-04 信封合同一致。
+// 非网络验证：对 contracts/v1/commands/command-envelope-v1.schema.json 做结构断言（required 字段 + api_version）。
+async function scenarioEnvelopeShapeProbe() {
+  const schema = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'contracts', 'v1', 'commands', 'command-envelope-v1.schema.json'), 'utf8')
+  );
+  const required = (schema.required || []).slice();
+  const envelope = { api_version: '1', idempotency_key: crypto.randomUUID(), input: {} };
+  const missing = required.filter((k) => !(k in envelope));
+  const apiOk =
+    schema.properties && schema.properties.api_version
+      ? (schema.properties.api_version.const === envelope.api_version) ||
+        (Array.isArray(schema.properties.api_version.enum) && schema.properties.api_version.enum.includes(envelope.api_version))
+      : true;
+  const keyOk = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(envelope.idempotency_key);
+  const ok = missing.length === 0 && apiOk && keyOk;
+  record(
+    'K2_envelope_shape_matches_C04',
+    ok,
+    'required 缺 ' + missing.length + '；api_version 合规=' + apiOk + '；idempotency_key uuid=' + keyOk
+  );
+}
+
 async function scenarioHttpBoot() {
   const page = await newPage(browser);
   await goto(page, `${HTTP_BASE}/index.html`);
@@ -406,6 +429,7 @@ async function main() {
   const t0 = Date.now();
   try {
     await scenarioKeyShapeProbe();
+    await scenarioEnvelopeShapeProbe();
     await scenarioHttpBoot();
     await scenarioFileDist();
     await scenarioSecretScan();

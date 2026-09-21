@@ -1,9 +1,9 @@
 {
-  "generated_at_utc": "2026-09-21T02:48:20.751Z",
+  "generated_at_utc": "2026-09-21T03:15:42.393Z",
   "runtime": {
     "node": "v22.22.3",
     "chrome": "headless new (CDP)",
-    "duration_ms": 1134
+    "duration_ms": 1227
   },
   "env_presence": {
     "SUPABASE_PUBLISHABLE_KEY": "unset",
@@ -15,6 +15,11 @@
       "id": "K1_key_shape_46char_leading_dash",
       "pass": true,
       "detail": "login-panel=true；config-problems li=0（sb_key 合成已 redact）"
+    },
+    {
+      "id": "K2_envelope_shape_matches_C04",
+      "pass": true,
+      "detail": "required 缺 0；api_version 合规=true；idempotency_key uuid=true"
     },
     {
       "id": "A1_http_boot_config_panel",

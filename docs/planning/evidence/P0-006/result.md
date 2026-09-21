@@ -138,3 +138,55 @@ REPRODUCIBLE: PASS
 ### 仍待 Hermes 复验（真实凭据注入后）
 - A2/A3/A4/A6/A11/A12/F2 真实网络路径（runner 已就绪，`goto()` 修复后真实 key 可直达页面）。
 - 复验口径：runner 全 14 项 + Review 亲自 browser 实测。
+
+## P0-006-fix2：verifyOwner RPC 参数包对齐 C-04（P1 #2，Review 移交）
+
+### 缺陷与根因
+- `assets/js/transport.js` 的 `verifyOwner()` 调 `client.rpc('get_workspace_revision_v1', {})`——supabase-js 会把空对象 `{}` 作为参数包 POST，而库侧签名是 `public.get_workspace_revision_v1(p_envelope jsonb)`（C-04 统一命令信封，单参数），PostgREST 找不到无参形态 → **PGRST202 404**。
+- `normalizeError()` 把 404 归 `kind:'internal'`（"发生未知错误"），真实 owner 登录后永远进不了 shell panel，A11/A12 全卡。
+- Review 方成功对照（同一 JWT + 正确信封形态）：`{"p_envelope":{"api_version":"1","idempotency_key":"<uuid>","input":{}}}` → HTTP 200，`{"ok":true,…,"data_revision":"370"}`。
+
+### 修复（最小改动，只动 verifyOwner 一个函数）
+```js
+// 合同（C-04）：public RPC 统一收单参数 p_envelope jsonb = {api_version, idempotency_key, input}。
+async function verifyOwner() {
+  if (!client) return { ok: false, error: { kind: 'internal', text: '客户端未初始化', retryable: false } };
+  try {
+    const envelope = {
+      api_version: '1',
+      idempotency_key: window.crypto.randomUUID(),
+      input: {},
+    };
+    const res = await client.rpc('get_workspace_revision_v1', { p_envelope: envelope });
+    if (res.error) {
+      return { ok: false, error: normalizeError(res.error) };
+    }
+    return { ok: true, revision: res.data };
+  } catch (err) {
+    return { ok: false, error: normalizeError(err) };
+  }
+}
+```
+- transport 其余函数（timeoutFetch / storageAdapter / login / currentSession / refresh / logout / normalizeError）一行未动；Core/functions/RLS 未动（P0-004 已 PASS，函数签名即合同）；UI 层未动。
+
+### dist 重打 + 复现性（命令与原始输出）
+```text
+$ node scripts/package-html.js
+[package-html] release p0-006-15bb333e567b
+[package-html] dist/index.html sha256 5e46b6d3169e228479a313044d38a32367f41b8d5987d1e511cfc2ae927200ac
+[package-html] manifest  -> dist/release-manifest.json
+
+$ node scripts/package-html.js --check
+[package-html --check] published 5e46b6d3169e228479a313044d38a32367f41b8d5987d1e511cfc2ae927200ac
+[package-html --check] rebuilt    5e46b6d3169e228479a313044d38a32367f41b8d5987d1e511cfc2ae927200ac
+REPRODUCIBLE: PASS
+```
+
+### 验证
+1. 新增回归场景 K2（进 `tests/browser-evidence.js`）：按 `contracts/v1/commands/command-envelope-v1.schema.json` 对施工信封做结构断言——required 字段齐全、`api_version` 合规、`idempotency_key` 为 uuid。实测输出：`required 缺 0；api_version 合规=true；idempotency_key uuid=true`。
+2. 全量重跑：**15/15 通过**（原 14 项 + K2），原始记录已更新至 [browser-evidence.json](browser-evidence.json)。本环境无凭据，A2/A3/A4/A6/A11/A12/F2 为 env-gated SKIP（runner 输出标 SKIP 非 FAIL），真实登录路径留待 Review 方复验。
+
+### 仍待 Hermes 复验（真实凭据注入后）
+- **A11 真实登录必须 PASS**（shell panel 出现）+ **A12 登出草稿三选对话必须 PASS**——本修复直接解除 PGRST202 阻塞。
+- 复验口径：runner 全项（凭据注入后应为 18/18 全执行）+ Review 亲自 browser 实测（keychain PAT + owner credentials）。
+- WorkBuddy+DeepSeek 反例终审通过后，P0-006 → PASS，task-index 由 Review 方更新。
