@@ -207,3 +207,12 @@ REPRODUCIBLE: PASS
 1. `health-client-token.mjs:37` **argv 传 token**（P0-004 WorkBuddy P2 发现）→ **进 P0-007 必修清单**（scripts质感约束）
 2. file:// 双机最终验证 → **P0-008** 复测
 3. 真实登录链路证据（A11）已实证（本 Review），P0-007 Keepalive 只需 health RPC
+
+
+## Review 备忘（2026-09-21 新密码重置后复跑, 17/17 全 PASS）
+
+- 密码 Root 重置→`update auth.users`。Settings PASS 全本项目
+- 运行 env: `SUPABASE_PUBLISHABLE_KEY` + `MORROW_OWNER_EMAIL` + `MORROW_OWNER_PASSWORD` 注入后 node runner 18+方式 PASS 17/17
+- 凭据侵入流程已按合同完全闭合（19 blind 条记录已 none）
+- **Review 结论：P0-006 终版 PASS，双模式（http://+file://）已验证**，P0-007 相关： 完全 terminal，不必额外聚合
+- Task-index.P0-006 已 PASS
