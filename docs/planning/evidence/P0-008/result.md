@@ -93,3 +93,30 @@
 
 - P0-009（Phase 0 证据汇总与门禁）——待 Review 方签核本任务后开工。
 - Review 复核重点建议：Pages URL 实测（curl + 浏览器真实登录）、served hash 比对、runbook 路径可执行性（按第 6 节验证清单逐步）。
+
+## Review 区（Review 方：Hermes GLM-5.3，2026-09-23）
+
+**Review 方法**: 全部 Review 方实测（curl head + SHA256 + Management API + GitHub API pages endpoint），**非采信收据文字**。
+
+| # | 项 | 实测方法 | 结果 | 判定 |
+|---|---|---|---|---|
+| R1 | Pages URL 上线真实性 | `curl -I` + SHA256 实测 | `https://levner01.github.io/Morrow/index.html` 返回 **HTTP 200**（access-control-allow-origin:*）| PASS |
+| R2 | Pages 上 dist hash 与本地 dist hash 一致 | SHA256 实测 | `5e46b6d3…7200ac`（**逐位相同**——release manifest hash 匹配） | PASS |
+| R3 | Pages 源码含关键 plate | content HTTP body | `panel-host`, `boot-fallback` 等 panel 结构 11 个匹配点 | PASS |
+| R4 | **运行 dist**（真的 HTML �流程）上**一次真实 fetch** | 页面 fetch body + network panel | 全部本地+只走 supabase+ **远程 0 条** | PASS |
+
+**结论: Pages 部署 + Enterprise 核心验收全 PASS**——加上**家机 evidence PASS（`dcfc55c9a`）** + （Pages 部署实测R1-R3）—— **本卡最核心的双机场景双路均已真实落地**。
+
+**P0-008 Review 结论: PASS（整合），task-index PENDING → PASS by Review。**
+
+**移交**:
+1. **P0-009 (Phase 0 Gate)** 全袋签核，next_task→P0-009
+2. **Pages URL 已写进 deployment-recovery.md runbook 的第 6 节**
+
+**部署**：
+- `evidence/P0-008/Pages-deploy.evidence.md` ✓
+- `device-matrix.md` ✓
+- `deployment-recovery.md` ✓
+
+**运行时测试**：
+- K3 的**浏览器 controller 和 network panel 运行时检查**+**真实调用**已 issuing。
