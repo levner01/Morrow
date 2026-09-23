@@ -1,0 +1,101 @@
+{
+  "generated_at_utc": "2026-09-22T14:38:48.589Z",
+  "runtime": {
+    "node": "v22.22.3",
+    "chrome": "headless new (CDP)",
+    "duration_ms": 3890
+  },
+  "env_presence": {
+    "SUPABASE_PUBLISHABLE_KEY": "set(len=46)",
+    "MORROW_OWNER_EMAIL": "set",
+    "MORROW_OWNER_PASSWORD": "set"
+  },
+  "results": [
+    {
+      "id": "K1_key_shape_46char_leading_dash",
+      "pass": true,
+      "detail": "login-panel=true；config-problems li=0（sb_key 合成已 redact）"
+    },
+    {
+      "id": "K2_envelope_shape_matches_C04",
+      "pass": true,
+      "detail": "required 缺 0；api_version 合规=true；idempotency_key uuid=true"
+    },
+    {
+      "id": "A1_http_boot_config_panel",
+      "pass": true,
+      "detail": "storage probe: 本地存储探针（http origin）：localStorage 可用 · IndexedDB 可用"
+    },
+    {
+      "id": "A1_http_network_local_only",
+      "pass": true,
+      "detail": "仅本地请求 8 条"
+    },
+    {
+      "id": "A2_http_query_config_login_panel",
+      "pass": true,
+      "detail": "location.search=\"\"（参数已抹除）"
+    },
+    {
+      "id": "A2_http_remote_only_supabase",
+      "pass": true,
+      "detail": "supabase 调用 1 条; 其他远程 0"
+    },
+    {
+      "id": "A3_wrong_password_mapped",
+      "pass": true,
+      "detail": "错误文案: 邮箱或密码不正确"
+    },
+    {
+      "id": "A4_offline_login_network_error",
+      "pass": true,
+      "detail": "错误文案: 无法连接到服务器，请检查网络后重试"
+    },
+    {
+      "id": "A11_real_login_shell",
+      "pass": true,
+      "detail": "sync-badge=synced（含 verifyOwner RPC 往返）"
+    },
+    {
+      "id": "A12_logout_draft_dialog",
+      "pass": true,
+      "detail": "检测到 1 条未同步草稿"
+    },
+    {
+      "id": "A12_logout_session_cleared",
+      "pass": true,
+      "detail": "残留 session 键 0；草稿保留 1"
+    },
+    {
+      "id": "A5_internal_exception_panel",
+      "pass": true,
+      "detail": "kind=internal 面板出现（无白屏）"
+    },
+    {
+      "id": "A6_resource_block_panel",
+      "pass": true,
+      "detail": "kind=resource 面板出现（SDK 缺失被兜住）"
+    },
+    {
+      "id": "F1_file_boot_config_panel",
+      "pass": true,
+      "detail": "storage probe: 本地存储探针（file origin）：localStorage 可用 · IndexedDB 可用"
+    },
+    {
+      "id": "F1_file_network_zero_remote",
+      "pass": true,
+      "detail": "远程 0 条（file origin 启动零 fetch）"
+    },
+    {
+      "id": "F2_file_remote_only_supabase",
+      "pass": true,
+      "detail": "supabase 调用 1 条; 其他远程 0"
+    },
+    {
+      "id": "S1_secret_scan_dist_and_source",
+      "pass": true,
+      "detail": "5 个关键文件零密钥形态"
+    }
+  ],
+  "console_warnings_errors": []
+}

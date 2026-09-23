@@ -120,7 +120,7 @@
       "id": "P0-008",
       "title": "完成双机访问和故障恢复的真实交付验证",
       "phase": "Phase 0",
-      "status": "PLANNED",
+      "status": "PENDING",
       "dependencies": [
         "P0-007"
       ],
@@ -128,7 +128,8 @@
       "executor": "Trae + Kimi K2.7 Code",
       "reviewer": "WorkBuddy + GLM-5.3",
       "task_file": "tasks/P0-008.md",
-      "evidence_file": "evidence/P0-008/result.md"
+      "evidence_file": "evidence/P0-008/result.md",
+      "note": "家机 evidence PASS 已签核，Pages/双机降级归 Trae 执行方完成后再签 PASS"
     },
     {
       "order": 9,
