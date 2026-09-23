@@ -212,6 +212,8 @@
   }
 
   async function boot() {
+    // 引导代码已执行即证明 CSS/JS 均生效，收起「资源加载失败」兜底横幅。
+    document.documentElement.classList.add('morrow-booted');
     const release = releaseInfo();
     // 版本帧 + 旧发行检测（stale 快照防线 1：版本不一致即提示）
     const seen = readJson(RELEASE_KEY);

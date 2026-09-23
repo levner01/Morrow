@@ -1,0 +1,54 @@
+{
+  "generated_at_utc": "2026-09-23T11:05:18.619Z",
+  "note": "no_h_overflow = documentElement.scrollWidth <= innerWidth；200% 文本缩放 = :root font-size 32px",
+  "matrix": [
+    {
+      "viewport": "1280x900",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "fontSize": "16px",
+      "no_h_overflow": true
+    },
+    {
+      "viewport": "768x1024",
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "fontSize": "16px",
+      "no_h_overflow": true
+    },
+    {
+      "viewport": "375x812",
+      "scrollWidth": 375,
+      "innerWidth": 375,
+      "fontSize": "16px",
+      "no_h_overflow": true
+    },
+    {
+      "viewport": "390x844",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "fontSize": "16px",
+      "no_h_overflow": true
+    },
+    {
+      "viewport": "320x568",
+      "scrollWidth": 320,
+      "innerWidth": 320,
+      "fontSize": "16px",
+      "no_h_overflow": true
+    },
+    {
+      "viewport": "375x812 @200% text",
+      "scrollWidth": 375,
+      "innerWidth": 375,
+      "fontSize": "32px",
+      "no_h_overflow": true
+    },
+    {
+      "viewport": "keyboard",
+      "tab_reaches_wake_check": true,
+      "focus_visible_ring": true,
+      "target_ge_44px": true
+    }
+  ]
+}

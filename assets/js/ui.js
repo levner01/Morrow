@@ -146,16 +146,20 @@
     btn.textContent = busy ? '登录中…' : '登录';
   }
 
-  // 登录成功后的壳面板（M1 登录壳不做业务页面）。
+  // 登录成功后的业务壳（MVP-002 起）：账号/登出/版本帧保留，今日页渲染进 today-host。
   function showShellPanel(user) {
     const host = el('panel-host');
     host.innerHTML =
-      '<section class="panel" data-testid="shell-panel">' +
-      '  <h2>登录成功</h2>' +
-      '  <p>当前账号：<strong>' + escapeHtml(user.email || user.id) + '</strong></p>' +
-      '  <p class="panel-note">登录壳已就绪并通过服务端校验；今日/锚点等业务页面随 MVP 任务到来。</p>' +
-      '  <div class="panel-actions"><button type="button" id="logout-btn" class="btn-secondary">退出登录</button></div>' +
+      '<section class="panel panel-shell" data-testid="shell-panel">' +
+      '  <div class="shell-head">' +
+      '    <p class="shell-account">' + escapeHtml(user.email || user.id) + '</p>' +
+      '    <button type="button" id="logout-btn" class="btn-secondary">退出登录</button>' +
+      '  </div>' +
+      '  <div id="today-host" class="today-host" aria-live="polite"></div>' +
       '</section>';
+    if (Morrow.today && typeof Morrow.today.start === 'function') {
+      Morrow.today.start();
+    }
   }
 
   // 登出草稿处理（失败矩阵：不默默擦除）：下载 / 保留在本机 / 删除并退出。

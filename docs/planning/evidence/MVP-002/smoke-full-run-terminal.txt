@@ -1,0 +1,25 @@
+MVP-002 烟测全量运行终端原始输出（10/10 通过）
+运行方式：tests/mvp002-smoke.js（无 SMOKE_SKIP_WRITES），真实凭据 keychain → env 注入，源码模式 http://127.0.0.1:8080
+运行时间：2026-09-23 18:5x（Asia/Shanghai）
+凭据纪律：env 仅内存，未落盘；输出中 key/password 已 redact
+
+PASS  S1_anchor_order_and_targets  — order=wake,workout_end,lights_off; targets=06:50,19:15,22:15
+PASS  S2_next_action_rendered  — next=记录起床
+PASS  S3_record_open_fired  — record_open_v1 请求已捕获
+PASS  S4_check_anchor_persisted  — wake actual=18:57; status=已记录
+PASS  S5_edit_anchor_lww  — wake=06:50; Core 投影 met=达标
+PASS  S6_reload_persistence  — refresh 后 wake actual=06:50
+PASS  S7_clear_anchor  — 确认文案="只清除实际记录，今日计划与记录分母保持不变。"；wake 已回未记录
+PASS  S8_day_plan_locked_shown  — error="更改日型失败：当日计划已锁定：只允许追加训练，不能减少或改型"；日型保持=训练工作日
+PASS  S9_validation_error_shown  — error="更改日型失败：当日计划已锁定：只允许追加训练，不能减少或改型"
+PASS  S10_network_remote_clean  — 远程 0；supabase 调用 23 条
+
+== 汇总: 10/10 通过 ==
+
+备注：
+1. 本次运行后真实数据已复原：wake 从「未记录」→ 打卡(18:57) → 修正(06:50) → 清空，最终回到「未记录」原状。
+2. S9 本条 PASS 的断言条件偏弱（error 区域可见即算过），当时捕获文本为 S8 残留。
+   已在 runner 中硬化 S9（快照旧文本 + 等待文本变化再断言），并用 SMOKE_SKIP_WRITES=1 复跑 S9，
+   如实结果见 smoke-s9only-output.json：error="打卡失败：实际时间不可为未来"（与 Core 直接拒绝报文一致，见 result.md）。
+3. 未来时间直接 RPC 探测（校验拒绝、零持久化）原始输出：
+   {"ok":false,"error":{"code":"VALIDATION_FAILED","message":"实际时间不可为未来","retryable":false, ...}}

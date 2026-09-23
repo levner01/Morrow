@@ -1,0 +1,26 @@
+{
+  "generated_at_utc": "2026-09-23T11:07:37.230Z",
+  "mode": "file:// + offline emulation (Network.emulateNetworkConditions)",
+  "results": [
+    {
+      "id": "F1_file_boot_storage_probe",
+      "pass": true,
+      "detail": "file:// origin 探针: 本地存储探针（file origin）：localStorage 可用 · IndexedDB 可用"
+    },
+    {
+      "id": "F1_file_today_page",
+      "pass": true,
+      "detail": "file:// 登录后今日页渲染"
+    },
+    {
+      "id": "F2_offline_explicit_error",
+      "pass": true,
+      "detail": "state={\"failure\":\"network\",\"login\":false,\"today\":false,\"errText\":\"\"}"
+    },
+    {
+      "id": "F2_no_auto_replay",
+      "pass": true,
+      "detail": "断网期间 supabase 出站 1 条（含 auth+context 首试，无重试风暴）"
+    }
+  ]
+}

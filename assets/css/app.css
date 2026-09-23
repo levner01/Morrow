@@ -158,3 +158,180 @@ html.morrow-booted #boot-fallback { display: none; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ===== MVP-002 今日行动页 =====
+ * 纵向单主轴：日期/日型 → 三锚点 → 下一步 → 日型入口。
+ * 三列对齐（目标/实际/状态）；n/a 弱化不消失；实际与目标状态分离；触控 ≥44px；200% 文本缩放不破。
+ */
+.shell-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.shell-account { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.today-host[aria-busy="true"] { opacity: 0.6; }
+
+.today { display: grid; gap: 18px; }
+.today-header { display: grid; gap: 4px; }
+.today-date { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: 0.01em; }
+.today-daytype { margin: 0; display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.daytype-name { font-size: 1rem; }
+.daytype-tag {
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.daytype-tag-workout { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+.today-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  color: var(--danger);
+  font-size: 0.95rem;
+}
+
+/* 三锚点列表：行内五列（名称/目标/实际/状态/操作），目标·实际·状态对齐 */
+.anchor-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.anchor-row {
+  display: grid;
+  grid-template-columns: minmax(64px, 0.9fr) repeat(3, minmax(0, 1fr)) auto;
+  gap: 6px 12px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.anchor-label { display: block; font-size: 0.72rem; color: var(--muted); }
+.anchor-value { display: block; font-size: 1rem; font-variant-numeric: tabular-nums; }
+.anchor-name { font-weight: 600; }
+.anchor-col-actual .anchor-actual-time { font-size: 1.15rem; font-weight: 700; }
+.anchor-actual-empty { color: var(--muted); }
+.anchor-deviation { display: block; font-size: 0.8rem; color: var(--muted); }
+.anchor-met { display: inline-block; margin-left: 8px; font-size: 0.8rem; font-weight: 600; }
+.anchor-met-yes { color: var(--ok); }
+.anchor-met-no { color: var(--warn); }
+.anchor-interval { display: block; font-size: 0.78rem; color: var(--muted); }
+.status-pending { color: var(--muted); }
+.status-recorded { color: var(--ok); font-weight: 600; }
+.status-na { color: var(--muted); }
+
+/* n/a 行弱化但保留 */
+.anchor-row-na { opacity: 0.55; }
+.anchor-na-note { font-size: 0.8rem; color: var(--muted); }
+
+/* 操作按钮：行内紧凑，仍保持 ≥44px 触控 */
+.btn-row {
+  min-height: 44px;
+  min-width: 72px;
+  padding: 8px 14px;
+  margin-left: 6px;
+  font-size: 0.95rem;
+}
+.btn-row-primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; font-weight: 600; }
+.btn-row-danger { color: var(--danger); }
+.anchor-pending-note { font-size: 0.85rem; color: var(--muted); }
+
+/* 唯一下一步：注意力第二位 */
+.next-action {
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  background: var(--card);
+  border-radius: 0 12px 12px 0;
+}
+.next-title { margin: 0 0 4px; font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+.next-text { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.next-overdue { display: inline-block; margin-top: 4px; font-size: 0.85rem; color: var(--warn); }
+
+.daytype-actions { display: flex; justify-content: flex-start; }
+.btn-today-secondary { font-size: 0.95rem; }
+
+/* 对话框 */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+.dialog {
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+.dialog-title { margin: 0; font-size: 1.1rem; }
+.dialog-note { margin: 0; font-size: 0.92rem; color: var(--muted); }
+.dialog-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.field-label { display: block; font-size: 0.9rem; margin-bottom: 4px; font-weight: 600; }
+.field-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.field-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.radio-group, .checkbox-group { display: grid; gap: 6px; }
+.radio-option, .checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.radio-option:focus-within, .checkbox-option:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.radio-option input, .checkbox-option input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+/* 初始向导 */
+.wizard { display: grid; gap: 14px; padding: 4px 0; }
+.wizard-title { margin: 0; font-size: 1.2rem; }
+.wizard-step { display: grid; gap: 10px; }
+.wizard-nav { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* 响应式：窄屏时锚点行降级为两行（名称占首行，目标/实际/状态/操作次行），无横向溢出 */
+@media (max-width: 560px) {
+  .anchor-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "name name name"
+      "target actual status"
+      "actions actions actions";
+    row-gap: 10px;
+  }
+  .anchor-col-name { grid-area: name; }
+  .anchor-col-target { grid-area: target; }
+  .anchor-col-actual { grid-area: actual; }
+  .anchor-col-status { grid-area: status; }
+  .anchor-col-actions { grid-area: actions; display: flex; justify-content: flex-end; }
+}
+@media (max-width: 390px) {
+  .today-date { font-size: 1.2rem; }
+  .anchor-value { font-size: 0.95rem; }
+}

@@ -24,6 +24,7 @@ const JS_FILES = [
   'assets/js/transport.js',
   'assets/js/drafts.js',
   'assets/js/ui.js',
+  'assets/js/today.js',
   'assets/js/app.js',
 ];
 const SDK_FILE = 'assets/vendor/supabase-js@2.116.0.umd.js';

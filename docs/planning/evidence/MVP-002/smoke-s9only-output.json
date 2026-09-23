@@ -1,0 +1,53 @@
+{
+  "generated_at_utc": "2026-09-23T11:01:24.182Z",
+  "runtime": {
+    "node": "v22.22.3",
+    "chrome": "headless new (CDP)",
+    "duration_ms": 12946
+  },
+  "env_presence": {
+    "SUPABASE_PUBLISHABLE_KEY": "set(len=46)",
+    "MORROW_OWNER_EMAIL": "set",
+    "MORROW_OWNER_PASSWORD": "set"
+  },
+  "results": [
+    {
+      "id": "S1_anchor_order_and_targets",
+      "pass": true,
+      "detail": "order=wake,workout_end,lights_off; targets=06:50,19:15,22:15"
+    },
+    {
+      "id": "S2_next_action_rendered",
+      "pass": true,
+      "detail": "next=记录起床"
+    },
+    {
+      "id": "S3_record_open_fired",
+      "pass": true,
+      "detail": "record_open_v1 请求已捕获"
+    },
+    {
+      "id": "S9_validation_error_shown",
+      "pass": true,
+      "detail": "error=\"打卡失败：实际时间不可为未来\""
+    },
+    {
+      "id": "S10_network_remote_clean",
+      "pass": true,
+      "detail": "远程 0；supabase 调用 11 条"
+    }
+  ],
+  "network_sample": [
+    "http://127.0.0.1:8080/index.html?sb_url=https%3A%2F%2Fumutubzcwwmmbxfjkyvj.supabase.co&sb_key=<redacted>",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/get_workspace_revision_v1",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/get_workspace_revision_v1",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/get_today_context_v1",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/get_today_context_v1",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/record_open_v1",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/record_open_v1",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/check_anchor_v1",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/check_anchor_v1"
+  ]
+}

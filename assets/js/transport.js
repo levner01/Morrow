@@ -172,6 +172,37 @@
     }
   }
 
+  // 通用业务 RPC 通道（MVP-002 起）：与 verifyOwner 同一 C-04 信封协议，input 由调用方给。
+  // 业务拒绝统一 HTTP 200 + ok:false（api-mapping 错误码表）；网络/Auth 异常走 normalizeError。
+  // fn 为服务端 RPC 名（白名单由 Core 控制），input 必须符合对应 commands/*.schema.json。
+  async function rpc(fn, input) {
+    if (!client) return { ok: false, error: { kind: 'internal', text: '客户端未初始化', retryable: false } };
+    try {
+      const envelope = {
+        api_version: '1',
+        idempotency_key: window.crypto.randomUUID(),
+        input: input || {},
+      };
+      const res = await client.rpc(fn, { p_envelope: envelope });
+      if (res.error) {
+        return { ok: false, error: normalizeError(res.error) };
+      }
+      // Core 统一信封：{ok:true, result:{...}, request_id, server_time}
+      const body = res.data;
+      if (body && typeof body === 'object' && 'ok' in body) {
+        if (body.ok) return { ok: true, result: body.result, request_id: body.request_id };
+        const e = (body.error && typeof body.error === 'object' && body.error) || {};
+        return {
+          ok: false,
+          error: { kind: 'internal', text: e.message || '请求被拒绝', retryable: !!e.retryable, code: e.code, details: e.details },
+        };
+      }
+      return { ok: true, result: body };
+    } catch (err) {
+      return { ok: false, error: normalizeError(err) };
+    }
+  }
+
   async function logout() {
     if (!client) return;
     try {
@@ -211,6 +242,7 @@
     currentSession: currentSession,
     refresh: refresh,
     verifyOwner: verifyOwner,
+    rpc: rpc,
     logout: logout,
     normalizeError: normalizeError,
   };
