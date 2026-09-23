@@ -108,4 +108,14 @@ S9 硬化复验（`SMOKE_SKIP_WRITES=1`，快照旧文本→等待文本变化�
 
 ## Review 签核区（执行方不填）
 
-（留空）
+- Review 人 / 模型：Hermes GLM-5.3（2026-09-23）
+- Review 方法：不采信收据，独立实测——
+  1. **git 范围审计**：transport.js 仅新增通用 `rpc()`（协议层未动）、migrations/contracts 全程零改动、`morrow-booted` 修复属 shell 范围内生缺陷、越界为零。
+  2. **Pages 一致性**：served SHA256 与本地 dist 逐位一致（`5e354ff8…e8d88`）。
+  3. **真实浏览器亲测**（独立 runner 配置→登录→渲染）：登录链路贯通（配置→owner→已同步）；三锚点顺序/目标/状态正确；`next_action=记录起床·已过时可补记` overdue 语义正确；**打卡对话→确认→实际持久化：刷新回显 actual 21:16 / 偏差 +866 / 未达标**——前端零业务计算（全渲染 Core 投影）实锤；清空确认文案精确（「只清除实际记录，今日计划与记录分母保持不变」）→ 确认 → 复原「待记录」。
+  4. **DB 审计链闭环**：本方写操作同事务 activity_log `life_data.update ×2` + `human.opened ×2`；**终态复原零污染**（wake 恒 pending/actual null）。
+  5. **6 张截图 vision 复核**：375/1280 视觉主体=三锚点、无卡片海/虚构 AI、三列对齐、200% 无溢出层级保持、对话框按钮主次层级与语义正确。
+- 对烟测声明的核对：S1–S10 与 DB receipts 时间线一致（10:57 check×2 completed + clear completed、set_day_type 锁定拒、S9 未来时间拒 = 5 条 rejected 与收据文本吻合）；「写+复原」策略与本方独立走查互证。
+- NOT_RUN 裁决：**两条均接受**——向导路径在已初始化真实库不可达，取舍正确；VoiceOver 缺 headless、键盘可达性已实测替代合理。暗色模式与家机 Pages 复核留待既有流程（P0-008 §7 遗留）。
+- 业务语义核验：「健身结束 19:15」固定；「未达标」与「已记录」分离展示且偏差并排；无含糊词；n/a 弱化保留。
+- 结论：**PASS**——五条验收全部实锤。task-index MVP-002 → PASS，next_task → MVP-003。
