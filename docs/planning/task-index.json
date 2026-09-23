@@ -2,7 +2,7 @@
   "planning_version": "1.1",
   "milestone": "M1 = Phase 0 + MVP + 7 days real use",
   "implementation_status": "NOT_STARTED",
-  "next_task": "MVP-001",
+  "next_task": "MVP-002",
   "phase1_gate": "LOCKED: 14 days + 80% + owner confirmation",
   "tasks": [
     {
@@ -152,7 +152,7 @@
       "id": "MVP-001",
       "title": "实现锚点、日型计划及统一业务语义",
       "phase": "MVP",
-      "status": "IN_PROGRESS",
+      "status": "PASS",
       "dependencies": [
         "P0-009"
       ],

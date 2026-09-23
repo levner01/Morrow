@@ -124,6 +124,12 @@ HTTP 400
 
 ## Review 区（留空，Review 方填写）
 
-- Review 人 / 模型：____（Hermes GLM-5.3 / WorkBuddy DeepSeek V4.1）
-- Review 方法：____
-- 结论：____（PASS / 返工；task-index MVP-001 状态由 Review 方翻）
+## Review 区（Review 方填写）
+
+- Review 人 / 模型：Hermes GLM-5.3（2026-09-23）
+- Review 方法：**不采信收据，独立复跑实测**——① Management API 直查 pg_proc/pg_index/has_function_privilege 核对 16 函数 + `activity_log_human_opened_uq` 索引 + grants 真实落库（anon 六 invoker EXECUTE=0）；② **原样重跑** `tests/mvp001-business-core.sql`（执行方文件零修改），取回 MVP001_PROOF 全 JSON，14/14 组 pass 与收据一致；③ 复跑后残留核验：life_data 仍恰 4 行（均 p0test:% P0 既有证据）、mvp001-smoke-test 恒 1 行（零增量）；④ 真实 initialize 事实核验：tracking_started_on=2026-09-21、schedule_history 单段 09-21；⑤ result.md/api-mapping.md 全文通读与合同 C01–C05/F01–F14 对照。
+- 复跑 proof 与收据逐项一致：F01 dev=-3/T03 审计同事务 6 行；F06 unknown；F03 180 met；F04 165 不达标；F05 210 met+关灯 unmet；F08 00:30 归前日 dev+135 + 窗口拒 + 跨日 wake 拒；F02/F07/F14 rate=1 met=2 streak=2 分离成立；F11 追加分母 8、provenance version='2'、DAY_PLAN_LOCKED×3、clear 分母不变不解锁；record_open 去重/不同日/不同 device/OWNER_DENIED；拒写矩阵 + replay + IDEMPOTENCY_KEY_REUSED；F13 时区公式；T14 next_action/data_revision 字符串。
+- 对 NOT_RUN 的裁决：三条均接受——①未初始化分支与 0008 框架前置判断同构（低风险，留 Gate-M1 前真实首次使用即天然覆盖）；②并发双会话压测依赖 PG 锁语义（tuple 级 ShareLock vs ExclusiveLock 互斥已由 T02 锁持有证明支撑）；③三条继承项留档正确，随 MVP 系列继续盯。
+- 对 2 条决策留档的裁决：**stats 进 context 批准**（C-03 指标唯一出口，MVP-002 依赖，schema 无变更）；**VALIDATION_FAILED 统一实现批准**（0008 框架一致性高于单卡字面，api-mapping 已注记）。
+- 烟测残留（1 open 行 + 2 receipts）：批准保留为 HTTP 证据，device_id 标记可识别可排除。
+- 结论：**PASS**——验收条件六条全实锤，task-index MVP-001 → PASS，next_task → MVP-002。质量记录：一次过审，无返工项；执行方自报与实测完全吻合（含三次失败运行的诚实留档，属合格工程行为非缺陷）。
