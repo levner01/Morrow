@@ -102,7 +102,9 @@
     if (status !== null && status >= 500) {
       return { kind: 'server', text: '服务暂不可用，请稍后再试', retryable: true };
     }
-    return { kind: 'internal', text: '操作失败，请重试', retryable: true };
+    // 诊断透传：未知错误形态显示 Name + 首段 message（不含任何 token/URL/SQL），便于现场定位。
+    const diag = (err.name ? String(err.name) : 'Error') + (msg ? '：' + msg.slice(0, 140) : '');
+    return { kind: 'internal', text: '操作失败，请重试（诊断：' + diag + '）', retryable: true };
   }
 
   async function login(email, password) {

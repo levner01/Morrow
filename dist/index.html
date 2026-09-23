@@ -7,7 +7,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Morrow · 登录</title>
 <meta name="description" content="Morrow 单用户生活工作台 — Phase 0 登录壳（P0-006）">
-<!-- Morrow 发行 p0-006-b5999823bf4f · 源 SHA256 b5999823bf4fe4165a5acb33db0ba19b2d9848545070eabc4db153b0ce7311ff · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
+<!-- Morrow 发行 p0-006-5fee08e7510b · 源 SHA256 5fee08e7510b2636e56ace5cf3160f181a189a5fb74281231f94511c0b009927 · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
 <style>
 /* ---- assets/css/app.css ---- */
 /* Morrow 登录壳样式（P0-006）：原生 CSS Grid，系统字体栈，零远程字体。
@@ -391,7 +391,7 @@ html.morrow-booted #boot-fallback { display: none; }
 
 
 <script>
-window.MORROW_RELEASE={"id":"p0-006-b5999823bf4f","source_sha256":"b5999823bf4fe4165a5acb33db0ba19b2d9848545070eabc4db153b0ce7311ff","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
+window.MORROW_RELEASE={"id":"p0-006-5fee08e7510b","source_sha256":"5fee08e7510b2636e56ace5cf3160f181a189a5fb74281231f94511c0b009927","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
 </script>
 <script>
 /* ---- assets/vendor/supabase-js@2.116.0.umd.js ---- */
@@ -594,7 +594,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     if (status !== null && status >= 500) {
       return { kind: 'server', text: '服务暂不可用，请稍后再试', retryable: true };
     }
-    return { kind: 'internal', text: '操作失败，请重试', retryable: true };
+    // 诊断透传：未知错误形态显示 Name + 首段 message（不含任何 token/URL/SQL），便于现场定位。
+    const diag = (err.name ? String(err.name) : 'Error') + (msg ? '：' + msg.slice(0, 140) : '');
+    return { kind: 'internal', text: '操作失败，请重试（诊断：' + diag + '）', retryable: true };
   }
 
   async function login(email, password) {

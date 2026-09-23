@@ -1,7 +1,7 @@
 {
   "release": {
-    "id": "p0-006-b5999823bf4f",
-    "built_at_utc": "2026-09-23T11:07:46.709Z",
+    "id": "p0-006-5fee08e7510b",
+    "built_at_utc": "2026-09-23T13:37:23.597Z",
     "reproducibility_note": "dist/index.html 不含时间戳；同一源输入两次构建 SHA256 必相同。复现校验请排除本字段 built_at_utc。"
   },
   "source_files": [
@@ -19,7 +19,7 @@
     },
     {
       "path": "assets/js/transport.js",
-      "sha256": "24311ec57cf5a8f047826ac13ead2e2b9fe087fcbe5243957334f2a3107b9be8"
+      "sha256": "21607bcabd5868d4ab0f6ebc8d94e87977aa56df8589b4e99f70aad3d1badc52"
     },
     {
       "path": "assets/js/drafts.js",
@@ -38,7 +38,7 @@
       "sha256": "1704c0a38a10fd48c8217e7b89dad8e8e8bb2151271c1a5d0a614aa42cf3e335"
     }
   ],
-  "source_sha256": "b5999823bf4fe4165a5acb33db0ba19b2d9848545070eabc4db153b0ce7311ff",
+  "source_sha256": "5fee08e7510b2636e56ace5cf3160f181a189a5fb74281231f94511c0b009927",
   "sdk": {
     "name": "@supabase/supabase-js",
     "version": "2.116.0",
@@ -49,7 +49,7 @@
   "entry_source": "index.html",
   "dist": {
     "path": "dist/index.html",
-    "sha256": "5e354ff8673931a158c2220bd8a07cf40103da7e1bb9d6ac0ba4b54a437e8d88"
+    "sha256": "7f3e74530a08d05bc0d425f588142a45dd7226f0edfadb3468df0b244f63d8e7"
   },
   "pages": {
     "url": "https://levner01.github.io/Morrow/",
