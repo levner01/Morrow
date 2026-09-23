@@ -2,7 +2,7 @@
   "planning_version": "1.1",
   "milestone": "M1 = Phase 0 + MVP + 7 days real use",
   "implementation_status": "NOT_STARTED",
-  "next_task": "P0-009",
+  "next_task": "MVP-001",
   "phase1_gate": "LOCKED: 14 days + 80% + owner confirmation",
   "tasks": [
     {
@@ -137,7 +137,7 @@
       "id": "P0-009",
       "title": "Phase0门禁签核并交付MVP开工包",
       "phase": "Phase 0",
-      "status": "PLANNED",
+      "status": "PASS",
       "dependencies": [
         "P0-008"
       ],
