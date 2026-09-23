@@ -1,7 +1,7 @@
 {
   "release": {
     "id": "p0-006-15bb333e567b",
-    "built_at_utc": "2026-09-21T03:12:09.498Z",
+    "built_at_utc": "2026-09-23T06:05:33.765Z",
     "reproducibility_note": "dist/index.html 不含时间戳；同一源输入两次构建 SHA256 必相同。复现校验请排除本字段 built_at_utc。"
   },
   "source_files": [
@@ -46,5 +46,11 @@
   "dist": {
     "path": "dist/index.html",
     "sha256": "5e46b6d3169e228479a313044d38a32367f41b8d5987d1e511cfc2ae927200ac"
+  },
+  "pages": {
+    "url": "https://levner01.github.io/Morrow/",
+    "html_path": "dist/index.html",
+    "deploy": "GitHub Actions（build_type=workflow），artifact path=dist",
+    "note": "Pages 服务的 HTML 与 dist.sha256 指向同一构建产物；回退时按 manifest 中 sha256 追溯。"
   }
 }

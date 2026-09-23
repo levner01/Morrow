@@ -113,6 +113,13 @@ function build(outDir) {
     sdk: sdk,
     entry_source: 'index.html',
     dist: { path: 'dist/index.html', sha256: sha256(Buffer.from(distHtml, 'utf8')) },
+    // P0-008：GitHub Pages 发布链路标注（静态字段，不参与 dist 可复现性校验）
+    pages: {
+      url: 'https://levner01.github.io/Morrow/',
+      html_path: 'dist/index.html',
+      deploy: 'GitHub Actions（build_type=workflow），artifact path=dist',
+      note: 'Pages 服务的 HTML 与 dist.sha256 指向同一构建产物；回退时按 manifest 中 sha256 追溯。',
+    },
   };
   fs.writeFileSync(path.join(outDir, 'release-manifest.json'), JSON.stringify(manifest, null, 2) + '\n', 'utf8');
   return { releaseId: releaseId, distSha: manifest.dist.sha256, distPath: distPath };

@@ -1,0 +1,38 @@
+# P0-008：Morrow dist/ 单文件发行 → GitHub Pages
+# 触发：main 分支 dist/ 或本 workflow 变更，或手动 dispatch。
+# 说明：Pages 站点 build_type=workflow（见 docs/operations/deployment-recovery.md）；
+# 上传产物固定为 dist/（单文件 index.html + release-manifest.json），不含任何密钥。
+
+name: Deploy dist to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
