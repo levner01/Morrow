@@ -152,7 +152,7 @@
       "id": "MVP-001",
       "title": "实现锚点、日型计划及统一业务语义",
       "phase": "MVP",
-      "status": "PLANNED",
+      "status": "IN_PROGRESS",
       "dependencies": [
         "P0-009"
       ],
