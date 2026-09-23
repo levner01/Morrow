@@ -1,0 +1,48 @@
+{
+  "generated_at_utc": "2026-09-23T06:23:36.132Z",
+  "runtime": {
+    "node": "v22.22.3",
+    "chrome": "headless new (CDP)",
+    "viewport": "1280x900",
+    "duration_ms": 3082
+  },
+  "pages_url": "https://levner01.github.io/Morrow/",
+  "env_presence": {
+    "SUPABASE_PUBLISHABLE_KEY": "set(len=46)",
+    "MORROW_OWNER_EMAIL": "set",
+    "MORROW_OWNER_PASSWORD": "set"
+  },
+  "results": [
+    {
+      "id": "P1_pages_boot_config_panel",
+      "pass": true,
+      "detail": "storage probe: 本地存储探针（http origin）：localStorage 可用 · IndexedDB 可用"
+    },
+    {
+      "id": "P1_pages_network_zero_remote",
+      "pass": true,
+      "detail": "远程 0 条（Pages 页启动零远程，资源全内联）"
+    },
+    {
+      "id": "P2_pages_key_injected_login_panel",
+      "pass": true,
+      "detail": "login-panel=true；supabase 调用 1 条; 其他远程 0"
+    },
+    {
+      "id": "P5_pages_real_login_shell",
+      "pass": true,
+      "detail": "sync-badge=synced（Pages URL 真实登录含 verifyOwner RPC 往返）"
+    },
+    {
+      "id": "F3_company_file_boot_config_panel",
+      "pass": true,
+      "detail": "storage probe: 本地存储探针（file origin）：localStorage 可用 · IndexedDB 可用"
+    },
+    {
+      "id": "F4_company_file_network_zero_remote",
+      "pass": true,
+      "detail": "远程 0 条（file origin 启动零 fetch）"
+    }
+  ],
+  "console_warnings_errors": []
+}
