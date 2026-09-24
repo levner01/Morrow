@@ -15,6 +15,7 @@ const crypto = require('node:crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'dist');
+const TASK_INDEX_PATH = path.join(ROOT, 'docs/planning/task-index.json');
 
 // 固定打包清单（顺序即加载顺序，classic scripts 依 AD-02 固定次序）。
 const CSS_FILES = ['assets/css/app.css'];
@@ -33,6 +34,35 @@ const SDK_VERSION = '2.116.0';
 
 function sha256(buf) {
   return crypto.createHash('sha256').update(buf).digest('hex');
+}
+
+// 生成版本前缀（MVP-002 顺手修复 1：不再硬编码 'p0-006-'）
+// 策略：优先从 task-index.json 读取 next_task，降级为 git 短 hash，最后兜底 'dev'
+function generateReleasePrefix() {
+  try {
+    // 尝试读取 task-index.json
+    const taskIndexRaw = fs.readFileSync(TASK_INDEX_PATH, 'utf8');
+    const taskIndex = JSON.parse(taskIndexRaw);
+    if (taskIndex && taskIndex.next_task) {
+      // next_task 格式如 "MVP-003" → 转为 "mvp-003"
+      return taskIndex.next_task.toLowerCase().replace(/_/g, '-');
+    }
+  } catch (_) {
+    // task-index.json 不存在或解析失败，尝试 git
+  }
+
+  try {
+    // 尝试获取 git 短 hash
+    const { execSync } = require('node:child_process');
+    const gitHash = execSync('git rev-parse --short HEAD', { cwd: ROOT, encoding: 'utf8' }).trim();
+    if (gitHash) {
+      return 'git-' + gitHash;
+    }
+  } catch (_) {
+    // git 不可用
+  }
+
+  return 'dev';
 }
 
 function read(rel) {
@@ -71,7 +101,8 @@ function build(outDir) {
   }
 
   const sourceSha = sha256(Buffer.from(files.map(function (f) { return f.sha256; }).join('\n'), 'utf8'));
-  const releaseId = 'p0-006-' + sourceSha.slice(0, 12);
+  const releasePrefix = generateReleasePrefix();
+  const releaseId = releasePrefix + '-' + sourceSha.slice(0, 12);
   const sdkBuf = read(SDK_FILE);
   const sdk = { name: SDK_NAME, version: SDK_VERSION, file: SDK_FILE, sha256: sha256(sdkBuf), license: 'MIT' };
 

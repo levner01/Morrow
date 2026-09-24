@@ -1,7 +1,11 @@
-/* Morrow 今日行动页（MVP-002）：三锚点主导的单主轴页面。
- * 数据契约：get_today_context_v1 投影（C-02/C-03）；写操作 check/clear/set_day_type 全走 Morrow.transport.rpc。
+/* Morrow 今日行动页（MVP-003）：三锚点主导的单主轴页面。
+ * 数据契约：get_today_context_v1 投影（C-02/C-03）；写操作 check/clear/set_day_type 全走 Morrow.store.submitCommand。
  * 前端零业务计算：target_met / interval_met / deviation / stats / next_action 一律渲染 Core 投影。
- * 有限 optimistic：提交后行内 pending（"已提交待确认"），以 RPC 返回 + 重载 context 为准。
+ * MVP-003 升级：
+ * 1. 接入 store.js 三态状态机：server snapshot / per-record command / form draft 严格分离。
+ * 2. 单 flight 队列：同一 record 只有一个 in-flight，新意图等待前一 flight 返回。
+ * 3. note 600ms debounce：输入 600ms 后再发 update_anchor_note_v1。
+ * 4. 即时打卡：hit check 按钮下立即发 RPC。
  */
 (function () {
   'use strict';
@@ -86,6 +90,18 @@
   // ---------- 数据加载 ----------
   async function loadContext() {
     const res = await Morrow.transport.rpc('get_today_context_v1', {});
+    if (res.ok && res.result) {
+      // 旧慢读不盖新写：response 返回时若 data_revision 比现有渲染的旧，按 server snapshot 处理
+      const incomingRevision = res.result.data_revision || '0';
+      if (Morrow.store.shouldAcceptSnapshot(incomingRevision)) {
+        Morrow.store.setServerSnapshot(res.result, incomingRevision);
+      } else {
+        // 旧值 → 不覆盖 newer local，并在 ui 给出"数据已更新"提示
+        if (Morrow.ui && typeof Morrow.ui.showStaleDataNotice === 'function') {
+          Morrow.ui.showStaleDataNotice();
+        }
+      }
+    }
     return res;
   }
 
@@ -98,7 +114,11 @@
       showError(res.error.text || '加载今日上下文失败');
       return;
     }
-    renderToday(res.result);
+    // 从 store 获取最新 server snapshot 渲染
+    const snapshot = Morrow.store.getServerSnapshot();
+    if (snapshot.context) {
+      renderToday(snapshot.context);
+    }
   }
 
   // ---------- 今日页渲染 ----------
@@ -190,6 +210,7 @@
     } else if (recorded) {
       actions =
         '<button type="button" class="btn-row" data-act="edit" data-anchor="' + a.anchor_type + '">修正时间</button>' +
+        '<button type="button" class="btn-row" data-act="note" data-anchor="' + a.anchor_type + '">备注</button>' +
         '<button type="button" class="btn-row btn-row-danger" data-act="clear" data-anchor="' + a.anchor_type + '">清空</button>';
     } else {
       actions = '<button type="button" class="btn-row btn-row-primary" data-act="check" data-anchor="' + a.anchor_type + '">打卡</button>';
@@ -245,6 +266,7 @@
         const act = btn.getAttribute('data-act');
         if (act === 'check') openCheckEditor(ctx, type, false);
         else if (act === 'edit') openCheckEditor(ctx, type, true);
+        else if (act === 'note') openNoteEditor(ctx, type);
         else if (act === 'clear') confirmClear(ctx, type);
       });
     });
@@ -281,18 +303,48 @@
   }
 
   async function submitCheck(ctx, anchorType, actualAt, isEdit) {
+    const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
     markPending(anchorType, isEdit ? '正在修正…' : '已提交待确认…');
-    const res = await Morrow.transport.rpc('check_anchor_v1', {
-      biz_date: ctx.biz_date,
-      anchor_type: anchorType,
-      actual_at: actualAt,
-      note: '',
-    });
-    if (!res.ok) {
+
+    // 使用 store.submitCommand（单 flight 队列）
+    const result = await Morrow.store.submitCommand(
+      recordKey,
+      async function (input, idempotencyKey) {
+        const res = await Morrow.transport.rpc('check_anchor_v1', {
+          biz_date: input.biz_date,
+          anchor_type: input.anchor_type,
+          actual_at: input.actual_at,
+          note: input.note || '',
+        });
+        if (!res.ok) {
+          throw res.error;
+        }
+        // 返回完整 context 用于更新 server snapshot
+        const snapshot = Morrow.store.getServerSnapshot();
+        return {
+          context: snapshot.context,
+          dataRevision: snapshot.dataRevision,
+        };
+      },
+      {
+        biz_date: ctx.biz_date,
+        anchor_type: anchorType,
+        actual_at: actualAt,
+        note: '',
+      }
+    );
+
+    if (!result.ok) {
       clearPending(anchorType);
-      showError((isEdit ? '修正失败：' : '打卡失败：') + (res.error.text || '未知错误'));
-      return false; // 对话框保持打开，错误已显示
+      if (result.error && result.error.kind === 'cancelled') {
+        showError('已取消重试');
+      } else {
+        showError((isEdit ? '修正失败：' : '打卡失败：') + (result.error.text || '未知错误'));
+      }
+      return false;
     }
+
+    // 成功后重新加载 context
     await reload();
     return true;
   }
@@ -305,16 +357,41 @@
       primaryLabel: '确认清空',
       danger: true,
       onPrimary: async function () {
+        const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
         markPending(anchorType, '正在清空…');
-        const res = await Morrow.transport.rpc('clear_anchor_v1', {
-          biz_date: ctx.biz_date,
-          anchor_type: anchorType,
-        });
-        if (!res.ok) {
+
+        const result = await Morrow.store.submitCommand(
+          recordKey,
+          async function (input, idempotencyKey) {
+            const res = await Morrow.transport.rpc('clear_anchor_v1', {
+              biz_date: input.biz_date,
+              anchor_type: input.anchor_type,
+            });
+            if (!res.ok) {
+              throw res.error;
+            }
+            const snapshot = Morrow.store.getServerSnapshot();
+            return {
+              context: snapshot.context,
+              dataRevision: snapshot.dataRevision,
+            };
+          },
+          {
+            biz_date: ctx.biz_date,
+            anchor_type: anchorType,
+          }
+        );
+
+        if (!result.ok) {
           clearPending(anchorType);
-          showError('清空失败：' + (res.error.text || '未知错误'));
+          if (result.error && result.error.kind === 'cancelled') {
+            showError('已取消重试');
+          } else {
+            showError('清空失败：' + (result.error.text || '未知错误'));
+          }
           return false;
         }
+
         await reload();
         return true;
       },
@@ -365,13 +442,141 @@
   }
 
   async function submitDayType(ctx, code) {
-    const res = await Morrow.transport.rpc('set_day_type_v1', { biz_date: ctx.biz_date, code: code });
-    if (!res.ok) {
-      showError('更改日型失败：' + (res.error.text || '未知错误')); // DAY_PLAN_LOCKED 等如实展示
+    const recordKey = 'daytype:' + ctx.biz_date;
+
+    const result = await Morrow.store.submitCommand(
+      recordKey,
+      async function (input, idempotencyKey) {
+        const res = await Morrow.transport.rpc('set_day_type_v1', {
+          biz_date: input.biz_date,
+          code: input.code,
+        });
+        if (!res.ok) {
+          throw res.error;
+        }
+        const snapshot = Morrow.store.getServerSnapshot();
+        return {
+          context: snapshot.context,
+          dataRevision: snapshot.dataRevision,
+        };
+      },
+      {
+        biz_date: ctx.biz_date,
+        code: code,
+      }
+    );
+
+    if (!result.ok) {
+      if (result.error && result.error.kind === 'cancelled') {
+        showError('已取消重试');
+      } else {
+        showError('更改日型失败：' + (result.error.text || '未知错误'));
+      }
       return false;
     }
+
     await reload();
     return true;
+  }
+
+  // ---------- Note 编辑（600ms debounce） ----------
+  const noteDebounceTimers = new Map();
+
+  function openNoteEditor(ctx, anchorType) {
+    const a = (ctx.anchors || []).find(function (x) { return x.anchor_type === anchorType; });
+    const label = ANCHOR_LABEL[anchorType] || anchorType;
+    const currentNote = a.note || '';
+
+    openDialog({
+      title: '编辑' + label + '备注',
+      bodyHtml:
+        '<label class="field-label" for="note-input">备注</label>' +
+        '<textarea id="note-input" class="field-input" rows="4" maxlength="2000" placeholder="最多 2000 字符">' + esc(currentNote) + '</textarea>' +
+        '<p class="field-hint">输入后 600ms 自动保存</p>',
+      primaryLabel: '完成',
+      onPrimary: async function () {
+        // 对话框关闭时，如果有未保存的 debounce，立即触发保存
+        const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
+        const timer = noteDebounceTimers.get(recordKey);
+        if (timer) {
+          clearTimeout(timer);
+          noteDebounceTimers.delete(recordKey);
+          const noteInput = el('note-input');
+          if (noteInput) {
+            await saveNote(ctx, anchorType, noteInput.value);
+          }
+        }
+        return true;
+      },
+    });
+
+    // 绑定 note 输入的 600ms debounce
+    const noteInput = el('note-input');
+    if (noteInput) {
+      noteInput.addEventListener('input', function () {
+        const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
+
+        // 清除之前的 timer
+        const existingTimer = noteDebounceTimers.get(recordKey);
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+        }
+
+        // 设置新的 debounce timer
+        const timer = setTimeout(async function () {
+          noteDebounceTimers.delete(recordKey);
+          await saveNote(ctx, anchorType, noteInput.value);
+        }, 600);
+
+        noteDebounceTimers.set(recordKey, timer);
+      });
+    }
+
+    setTimeout(function () { if (noteInput) noteInput.focus(); }, 0);
+  }
+
+  async function saveNote(ctx, anchorType, note) {
+    const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
+    const a = (ctx.anchors || []).find(function (x) { return x.anchor_type === anchorType; });
+
+    if (!a || !a.id) {
+      showError('记录不存在，无法保存备注');
+      return;
+    }
+
+    const result = await Morrow.store.submitCommand(
+      recordKey,
+      async function (input, idempotencyKey) {
+        const res = await Morrow.transport.rpc('update_anchor_note_v1', {
+          record_id: input.record_id,
+          note: input.note,
+        });
+        if (!res.ok) {
+          throw res.error;
+        }
+        const snapshot = Morrow.store.getServerSnapshot();
+        return {
+          context: snapshot.context,
+          dataRevision: snapshot.dataRevision,
+        };
+      },
+      {
+        record_id: a.id,
+        note: note,
+      }
+    );
+
+    if (!result.ok) {
+      if (result.error && result.error.kind === 'cancelled') {
+        showError('已取消重试');
+      } else {
+        showError('保存备注失败：' + (result.error.text || '未知错误'));
+      }
+      return;
+    }
+
+    // 保存成功后重新加载 context
+    await reload();
   }
 
   // ---------- 对话框 ----------
@@ -507,6 +712,9 @@
   }
 
   // ---------- 入口 ----------
+  let focusRefreshTimer = null;
+  let onlineRefreshTimer = null;
+
   async function start() {
     setBusy(true);
     const res = await loadContext();
@@ -519,11 +727,47 @@
       showError(res.error.text || '加载今日上下文失败');
       return;
     }
-    renderToday(res.result);
+    const snapshot = Morrow.store.getServerSnapshot();
+    if (snapshot.context) {
+      renderToday(snapshot.context);
+    }
     // record_open：辅助真实使用证据；device_id 仅去重标识，失败不打扰用户。
     Morrow.transport
       .rpc('record_open_v1', { device_id: getDeviceId(), biz_date: res.result.biz_date })
       .catch(function () { /* 辅助证据，静默 */ });
+
+    // focus / online 事件：刷新只读（re-render context），不自动写（不触发 form 提交/打卡/草稿清空）
+    window.addEventListener('focus', handleFocusRefresh);
+    window.addEventListener('online', handleOnlineRefresh);
+
+    // store 状态变更监听：更新 UI 同步标识
+    Morrow.store.onStateChange(function (state, detail) {
+      if (Morrow.ui && typeof Morrow.ui.setSyncStatus === 'function') {
+        Morrow.ui.setSyncStatus(state, detail);
+      }
+    });
+  }
+
+  // focus 事件刷新（合并 2 秒内重复事件）
+  function handleFocusRefresh() {
+    if (focusRefreshTimer) {
+      clearTimeout(focusRefreshTimer);
+    }
+    focusRefreshTimer = setTimeout(async function () {
+      // 刷新只读：重新拉取 context，不自动写
+      await reload();
+    }, 2000);
+  }
+
+  // online 事件刷新（合并 2 秒内重复事件）
+  function handleOnlineRefresh() {
+    if (onlineRefreshTimer) {
+      clearTimeout(onlineRefreshTimer);
+    }
+    onlineRefreshTimer = setTimeout(async function () {
+      // 刷新只读：重新拉取 context，不自动写
+      await reload();
+    }, 2000);
   }
 
   Morrow.today = { start: start, reload: reload, _renderWizard: renderWizard };

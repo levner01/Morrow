@@ -1,6 +1,11 @@
-/* Morrow app 引导层（P0-006）：状态机 boot → auth_check → synced / config_required / auth_required / failed。
+/* Morrow app 引导层（MVP-003）：状态机 boot → auth_check → synced / config_required / auth_required / failed。
  * 依据 C-07：loading 失败进 failed（可重试，展示旧快照时间戳）；session 失效进 auth_required（不丢草稿）。
  * 全局兜底：SDK 缺失 → 资源失败面板；未捕获异常/Promise 拒绝 → 内部异常面板（不白屏）。
+ *
+ * MVP-003 扩展：
+ * 1. getCurrentUser()：供 drafts.js 获取当前 owner_uid（跨 owner 隔离）。
+ * 2. 登录成功后迁移匿名草稿到正式 owner namespace。
+ * 3. Session 失效恢复：登录后草稿不丢、回今日页。
  */
 (function () {
   'use strict';
@@ -39,6 +44,17 @@
     Morrow.ui.setSyncStatus('synced', '最后同步 ' + lastSyncStamp());
   }
 
+  // 当前登录用户（供 drafts.js 跨 owner 隔离使用）
+  let currentUser = null;
+
+  function getCurrentUser() {
+    return currentUser;
+  }
+
+  function setCurrentUser(user) {
+    currentUser = user;
+  }
+
   async function authCheck() {
     Morrow.ui.setSyncStatus('syncing', '正在校验会话…');
     const session = await Morrow.transport.currentSession();
@@ -66,6 +82,11 @@
     // 有本地会话 → 轻量 RPC 权威校验（网络/owner/Auth 三合一证据）。
     const verify = await Morrow.transport.verifyOwner();
     if (verify.ok) {
+      // 设置当前用户并迁移匿名草稿
+      setCurrentUser(session.session);
+      if (Morrow.drafts && typeof Morrow.drafts.migrateAnonymousDrafts === 'function') {
+        Morrow.drafts.migrateAnonymousDrafts();
+      }
       markSynced();
       Morrow.ui.showShellPanel(session.session);
       bindLogout();
@@ -160,6 +181,11 @@
 
   async function doLogout() {
     Morrow.ui.setSyncStatus('syncing', '正在退出…');
+    // 清除当前用户和命令状态
+    setCurrentUser(null);
+    if (Morrow.store && typeof Morrow.store.clearCommands === 'function') {
+      Morrow.store.clearCommands();
+    }
     await Morrow.transport.logout();
     Morrow.ui.setSyncStatus('none', '');
     Morrow.ui.showLoginPanel('');
@@ -178,6 +204,11 @@
       if (res.ok) {
         const verify = await Morrow.transport.verifyOwner();
         if (verify.ok) {
+          // 设置当前用户并迁移匿名草稿
+          setCurrentUser(res.user);
+          if (Morrow.drafts && typeof Morrow.drafts.migrateAnonymousDrafts === 'function') {
+            Morrow.drafts.migrateAnonymousDrafts();
+          }
           markSynced();
           Morrow.ui.showShellPanel(res.user);
           bindLogout();
@@ -255,7 +286,7 @@
     });
   }
 
-  Morrow.app = { boot: boot };
+  Morrow.app = { boot: boot, getCurrentUser: getCurrentUser, setCurrentUser: setCurrentUser, bootWithConfig: bootWithConfig };
   Morrow.APP_RELEASE_KEYS = { RELEASE_KEY: RELEASE_KEY, LAST_SYNC_KEY: LAST_SYNC_KEY };
 
   installGlobalGuards();

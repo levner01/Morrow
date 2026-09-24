@@ -1,6 +1,12 @@
-/* Morrow 渲染层（P0-006）：面板渲染、三态同步标识、版本帧、存储探针行、草稿登出对话。
+/* Morrow 渲染层（MVP-003）：面板渲染、三态同步标识、版本帧、存储探针行、草稿登出对话、LWW 确认对话。
  * 只渲染 Morrow.app 给的状态；不直接调 transport / SDK。
  * 同步状态严格三态（C-07）：已同步 / 同步中 / 同步失败·重试（时间戳为辅助说明）。
+ *
+ * MVP-003 扩展：
+ * 1. LWW 确认对话（showLwwConfirmDialog）：未知结果处理时明确告知 LWW 风险。
+ * 2. 旧慢读提示（showStaleDataNotice）：response 返回时若 data_revision 比现有渲染的旧，提示"数据已更新"。
+ * 3. 重新配置按钮：登录失败/同步失败状态下显式提供"重新配置"入口。
+ * 4. 诊断透传精简化：短文案 + 可展开 details。
  */
 (function () {
   'use strict';
@@ -56,21 +62,41 @@
     }
   }
 
-  // 通用失败面板：可理解文案 + 主按钮（重试 / 检查配置 / 重新加载按 kind 决定）。
+  // 通用失败面板：可理解文案 + 主按钮（重试 / 检查配置 / 重新加载按 kind 决定）+ 重新配置按钮。
   function showFailure(kind, text, options) {
     const opts = options || {};
     const host = el('panel-host');
     const staleTime = opts.staleSnapshotAt ? '（最后成功同步：' + opts.staleSnapshotAt + '）' : '';
     const primaryLabel = kind === 'config' ? '检查配置' : kind === 'internal' ? '重新加载' : '重试';
+
+    // MVP-002 顺手修复 2：失败态显式提供"重新配置"入口
+    const showReconfig = kind === 'network' || kind === 'config' || kind === 'internal';
+    const reconfigButton = showReconfig
+      ? '<button type="button" id="failure-reconfig" class="btn-secondary">重新配置</button>'
+      : '';
+
+    // MVP-002 顺手修复 4：诊断透传精简化（短文案 + 可展开 details）
+    let diagnosticHtml = '';
+    if (opts.diagnostic) {
+      diagnosticHtml =
+        '<details class="failure-diagnostic">' +
+        '  <summary>诊断信息</summary>' +
+        '  <pre class="diagnostic-detail">' + escapeHtml(opts.diagnostic) + '</pre>' +
+        '</details>';
+    }
+
     host.innerHTML =
       '<section class="panel panel-failure" role="alert" data-testid="failure-panel" data-kind="' + kind + '">' +
       '  <h2>' + escapeHtml(opts.title || '出错了') + '</h2>' +
       '  <p class="failure-text">' + escapeHtml(text) + escapeHtml(staleTime) + '</p>' +
       (opts.hint ? '<p class="failure-hint">' + escapeHtml(opts.hint) + '</p>' : '') +
+      diagnosticHtml +
       '  <div class="panel-actions">' +
       '    <button type="button" id="failure-primary" class="btn-primary">' + escapeHtml(primaryLabel) + '</button>' +
+      reconfigButton +
       '  </div>' +
       '</section>';
+
     el('failure-primary').addEventListener('click', function () {
       if (kind === 'internal') {
         window.location.reload();
@@ -78,6 +104,23 @@
         opts.onPrimary();
       }
     });
+
+    // 重新配置按钮事件
+    if (showReconfig) {
+      const reconfigBtn = el('failure-reconfig');
+      if (reconfigBtn) {
+        reconfigBtn.addEventListener('click', function () {
+          // 清除旧配置并显示配置面板
+          Morrow.config.clear();
+          Morrow.ui.showConfigPanel(null, function (cfg) {
+            // 配置保存后重新启动
+            if (Morrow.app && typeof Morrow.app.bootWithConfig === 'function') {
+              Morrow.app.bootWithConfig(cfg);
+            }
+          });
+        });
+      }
+    }
   }
 
   function showResourceFailure() {
@@ -180,6 +223,40 @@
     el('draft-wipe').addEventListener('click', actions.onWipe);
   }
 
+  // LWW 确认对话（MVP-003）：未知结果处理时明确告知 LWW 风险。
+  function showLwwConfirmDialog(recordKey, input, callback) {
+    const host = el('panel-host');
+    const recordLabel = recordKey || '该记录';
+    host.innerHTML =
+      '<section class="panel" data-testid="lww-dialog">' +
+      '  <h2>确认重试？</h2>' +
+      '  <p class="panel-note">网络异常导致同步结果未知。如果其他设备已写入新值，重试可能会覆盖它们。</p>' +
+      '  <p class="panel-note"><strong>记录：</strong>' + escapeHtml(recordLabel) + '</p>' +
+      '  <div class="panel-actions">' +
+      '    <button type="button" id="lww-confirm" class="btn-primary">确认重试（同 key）</button>' +
+      '    <button type="button" id="lww-cancel" class="btn-secondary">取消</button>' +
+      '  </div>' +
+      '</section>';
+    el('lww-confirm').addEventListener('click', function () {
+      callback(true);
+    });
+    el('lww-cancel').addEventListener('click', function () {
+      callback(false);
+    });
+  }
+
+  // 旧慢读提示（MVP-003）：response 返回时若 data_revision 比现有渲染的旧，提示"数据已更新"。
+  function showStaleDataNotice() {
+    const host = el('today-error');
+    if (!host) return;
+    host.textContent = '数据已更新，请刷新查看最新内容';
+    host.hidden = false;
+    // 3 秒后自动隐藏
+    setTimeout(function () {
+      host.hidden = true;
+    }, 3000);
+  }
+
   function escapeHtml(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;')
@@ -209,6 +286,8 @@
     setLoginBusy: setLoginBusy,
     showShellPanel: showShellPanel,
     showDraftLogoutDialog: showDraftLogoutDialog,
+    showLwwConfirmDialog: showLwwConfirmDialog,
+    showStaleDataNotice: showStaleDataNotice,
     formatStamp: formatStamp,
   };
 })();

@@ -7,7 +7,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Morrow · 登录</title>
 <meta name="description" content="Morrow 单用户生活工作台 — Phase 0 登录壳（P0-006）">
-<!-- Morrow 发行 p0-006-5fee08e7510b · 源 SHA256 5fee08e7510b2636e56ace5cf3160f181a189a5fb74281231f94511c0b009927 · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
+<!-- Morrow 发行 mvp-003-34028dfbf629 · 源 SHA256 34028dfbf62994c881d6267a4ec7db261622262b1129fdfe98883f5c071c2ae0 · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
 <style>
 /* ---- assets/css/app.css ---- */
 /* Morrow 登录壳样式（P0-006）：原生 CSS Grid，系统字体栈，零远程字体。
@@ -391,7 +391,7 @@ html.morrow-booted #boot-fallback { display: none; }
 
 
 <script>
-window.MORROW_RELEASE={"id":"p0-006-5fee08e7510b","source_sha256":"5fee08e7510b2636e56ace5cf3160f181a189a5fb74281231f94511c0b009927","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
+window.MORROW_RELEASE={"id":"mvp-003-34028dfbf629","source_sha256":"34028dfbf62994c881d6267a4ec7db261622262b1129fdfe98883f5c071c2ae0","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
 </script>
 <script>
 /* ---- assets/vendor/supabase-js@2.116.0.umd.js ---- */
@@ -744,19 +744,23 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
 ;
 /* ---- assets/js/drafts.js ---- */
-/* Morrow 存储探针 + 草稿存储（P0-006）。
+/* Morrow 存储探针 + 草稿存储（MVP-003 扩展）。
  * 失败矩阵：本地 storage 不可用时「阻止假装保存」，向用户说明并可下载无凭据草稿 JSON。
  * 探针在每次 boot 运行：localStorage 写/删实测 + IndexedDB open 实测，结果渲染到界面，
  * 让 file://（尤其 Safari 对 file origin 的限制）的能力差异对用户可见。
- * 草稿条目结构（C-07）：{record_key, input, idempotency_key, last_known_version, created_at, sent_at, state}
- * —— 本壳暂无业务表单，仅存框架与示例语义，登出时做未同步草稿检查。
+ *
+ * MVP-003 扩展：
+ * 1. 跨 owner 隔离：草稿 key 含 owner_uid + device_id 复合 namespace，不同账号登录各存各的。
+ * 2. 标识列：草稿必须含 {browser_version, device_id, biz_date, created_at, type}。
+ * 3. 存储失败处理：storage 拒绝时绝不谎报安全保存，显示"无法持久化"提示 + 下载草稿 JSON 按钮。
+ * 4. 探针文案三值化：origin 区分 file / http / https（修复 MVP-002 顺手修复 3）。
  */
 (function () {
   'use strict';
   const Morrow = (window.Morrow = window.Morrow || {});
 
-  const DRAFTS_KEY = 'morrow.drafts.v1';
   const PROBE_DB = 'morrow-probe';
+  const DEVICE_KEY = 'morrow.device.v1';
 
   // 实测 localStorage：写→读→删，任一异常即不可用（不猜）。
   function probeLocalStorage() {
@@ -817,20 +821,97 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     });
   }
 
+  // MVP-002 顺手修复 3：探针文案三值化（file / http / https）
+  function getOriginType() {
+    const protocol = window.location.protocol;
+    if (protocol === 'file:') return 'file';
+    if (protocol === 'https:') return 'https';
+    return 'http'; // 含 http:// 和 loopback (127.0.0.1)
+  }
+
   async function probe() {
     const ls = probeLocalStorage();
     const idb = await probeIndexedDB();
     return {
-      origin: window.location.protocol === 'file:' ? 'file' : 'http',
+      origin: getOriginType(),
       localStorage: ls,
       indexedDB: idb,
       usable: ls === 'ok', // 草稿承诺只建立在实测可用之上
     };
   }
 
+  // ---------- 跨 owner 隔离的草稿存储 ----------
+
+  // 获取当前 owner_uid（从 session 中派生，未登录时返回 null）
+  function getCurrentOwnerUid() {
+    // 从 Morrow.app 的当前用户中获取（如果已登录）
+    // 注意：这个函数需要在 app.js 登录成功后设置当前用户
+    if (Morrow.app && typeof Morrow.app.getCurrentUser === 'function') {
+      const user = Morrow.app.getCurrentUser();
+      return user && user.id ? user.id : null;
+    }
+    return null;
+  }
+
+  // 获取设备 ID（如果不存在则生成）
+  function getDeviceId() {
+    try {
+      let id = window.localStorage.getItem(DEVICE_KEY);
+      if (!id) {
+        id = 'web-' + window.crypto.randomUUID();
+        window.localStorage.setItem(DEVICE_KEY, id);
+      }
+      return id;
+    } catch (_) {
+      return 'web-anon-' + Math.random().toString(36).slice(2);
+    }
+  }
+
+  // 草稿 key：owner_uid + device_id 复合 namespace（跨 owner 不泄露）
+  function getDraftsKey() {
+    const ownerUid = getCurrentOwnerUid();
+    const deviceId = getDeviceId();
+    if (!ownerUid) {
+      // 未登录时使用临时 key（登录后会迁移到正式 key）
+      return 'morrow.drafts.v1.anonymous.' + deviceId;
+    }
+    return 'morrow.drafts.v1.' + ownerUid + '.' + deviceId;
+  }
+
+  // 迁移匿名草稿到正式 owner namespace（登录成功后调用）
+  function migrateAnonymousDrafts() {
+    const ownerUid = getCurrentOwnerUid();
+    if (!ownerUid) return;
+
+    const deviceId = getDeviceId();
+    const anonymousKey = 'morrow.drafts.v1.anonymous.' + deviceId;
+    const ownerKey = 'morrow.drafts.v1.' + ownerUid + '.' + deviceId;
+
+    try {
+      const anonymousDrafts = window.localStorage.getItem(anonymousKey);
+      if (anonymousDrafts) {
+        // 合并到 owner key（如果 owner key 已有数据，保留两者）
+        const existingDrafts = window.localStorage.getItem(ownerKey);
+        if (!existingDrafts) {
+          window.localStorage.setItem(ownerKey, anonymousDrafts);
+        } else {
+          // 合并：anonymous 草稿追加到 owner 草稿
+          const anonymous = JSON.parse(anonymousDrafts);
+          const existing = JSON.parse(existingDrafts);
+          const merged = Array.isArray(existing) ? existing.concat(anonymous) : anonymous;
+          window.localStorage.setItem(ownerKey, JSON.stringify(merged));
+        }
+        // 清除匿名草稿
+        window.localStorage.removeItem(anonymousKey);
+      }
+    } catch (_) {
+      // 迁移失败不阻断登录流程
+    }
+  }
+
   function readDrafts() {
     try {
-      const raw = window.localStorage.getItem(DRAFTS_KEY);
+      const raw = window.localStorage.getItem(getDraftsKey());
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch (_) {
@@ -839,9 +920,16 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   }
 
   function writeDrafts(list) {
-    window.localStorage.setItem(DRAFTS_KEY, JSON.stringify(list));
+    try {
+      window.localStorage.setItem(getDraftsKey(), JSON.stringify(list));
+      return { ok: true };
+    } catch (err) {
+      // 存储失败：配额/权限/隐私模式
+      return { ok: false, error: err };
+    }
   }
 
+  // 添加草稿（含标识列：browser_version, device_id, biz_date, created_at, type）
   function addDraft(draft) {
     const list = readDrafts();
     const entry = {
@@ -852,10 +940,46 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       created_at: new Date().toISOString(),
       sent_at: null,
       state: 'draft_saved',
+      // MVP-003 标识列
+      browser_version: navigator.userAgent || 'unknown',
+      device_id: getDeviceId(),
+      biz_date: draft.biz_date || '',
+      type: draft.type || 'unknown',
     };
     list.push(entry);
-    writeDrafts(list);
-    return entry;
+    const result = writeDrafts(list);
+    if (!result.ok) {
+      // 存储失败：绝不谎报安全保存
+      return { ok: false, error: result.error, entry: entry };
+    }
+    return { ok: true, entry: entry };
+  }
+
+  function updateDraft(recordKey, updates) {
+    const list = readDrafts();
+    const index = list.findIndex(function (d) {
+      return d && d.record_key === recordKey;
+    });
+    if (index === -1) return { ok: false, error: 'draft not found' };
+
+    list[index] = Object.assign({}, list[index], updates);
+    const result = writeDrafts(list);
+    if (!result.ok) {
+      return { ok: false, error: result.error };
+    }
+    return { ok: true, entry: list[index] };
+  }
+
+  function removeDraft(recordKey) {
+    const list = readDrafts();
+    const filtered = list.filter(function (d) {
+      return d && d.record_key !== recordKey;
+    });
+    const result = writeDrafts(filtered);
+    if (!result.ok) {
+      return { ok: false, error: result.error };
+    }
+    return { ok: true };
   }
 
   function unsyncedCount() {
@@ -866,34 +990,75 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
   function clearDrafts() {
     try {
-      window.localStorage.removeItem(DRAFTS_KEY);
-    } catch (_) { /* 忽略 */ }
+      window.localStorage.removeItem(getDraftsKey());
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err };
+    }
   }
 
   // 无凭据草稿导出（C-07 降级路径）：不含 token/密码/会话，仅草稿业务字段。
   function exportJson() {
     return JSON.stringify(
-      { kind: 'morrow-drafts', schema_version: 1, exported_at: new Date().toISOString(), drafts: readDrafts() },
+      {
+        kind: 'morrow-drafts',
+        schema_version: 1,
+        exported_at: new Date().toISOString(),
+        owner_uid: getCurrentOwnerUid(),
+        device_id: getDeviceId(),
+        drafts: readDrafts(),
+      },
       null,
       2
     );
   }
 
-  Morrow.storage = { probe: probe, DRAFTS_KEY: DRAFTS_KEY };
+  // 下载草稿 JSON 到文件
+  function downloadDrafts() {
+    try {
+      const blob = new Blob([exportJson()], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'morrow-drafts-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () {
+        URL.revokeObjectURL(a.href);
+      }, 1000);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err };
+    }
+  }
+
+  Morrow.storage = { probe: probe };
   Morrow.drafts = {
     add: addDraft,
+    update: updateDraft,
+    remove: removeDraft,
     count: unsyncedCount,
     clear: clearDrafts,
     exportJson: exportJson,
+    download: downloadDrafts,
+    migrateAnonymousDrafts: migrateAnonymousDrafts,
+    getDeviceId: getDeviceId,
     _read: readDrafts,
+    _getKey: getDraftsKey,
   };
 })();
 
 ;
 /* ---- assets/js/ui.js ---- */
-/* Morrow 渲染层（P0-006）：面板渲染、三态同步标识、版本帧、存储探针行、草稿登出对话。
+/* Morrow 渲染层（MVP-003）：面板渲染、三态同步标识、版本帧、存储探针行、草稿登出对话、LWW 确认对话。
  * 只渲染 Morrow.app 给的状态；不直接调 transport / SDK。
  * 同步状态严格三态（C-07）：已同步 / 同步中 / 同步失败·重试（时间戳为辅助说明）。
+ *
+ * MVP-003 扩展：
+ * 1. LWW 确认对话（showLwwConfirmDialog）：未知结果处理时明确告知 LWW 风险。
+ * 2. 旧慢读提示（showStaleDataNotice）：response 返回时若 data_revision 比现有渲染的旧，提示"数据已更新"。
+ * 3. 重新配置按钮：登录失败/同步失败状态下显式提供"重新配置"入口。
+ * 4. 诊断透传精简化：短文案 + 可展开 details。
  */
 (function () {
   'use strict';
@@ -949,21 +1114,41 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     }
   }
 
-  // 通用失败面板：可理解文案 + 主按钮（重试 / 检查配置 / 重新加载按 kind 决定）。
+  // 通用失败面板：可理解文案 + 主按钮（重试 / 检查配置 / 重新加载按 kind 决定）+ 重新配置按钮。
   function showFailure(kind, text, options) {
     const opts = options || {};
     const host = el('panel-host');
     const staleTime = opts.staleSnapshotAt ? '（最后成功同步：' + opts.staleSnapshotAt + '）' : '';
     const primaryLabel = kind === 'config' ? '检查配置' : kind === 'internal' ? '重新加载' : '重试';
+
+    // MVP-002 顺手修复 2：失败态显式提供"重新配置"入口
+    const showReconfig = kind === 'network' || kind === 'config' || kind === 'internal';
+    const reconfigButton = showReconfig
+      ? '<button type="button" id="failure-reconfig" class="btn-secondary">重新配置</button>'
+      : '';
+
+    // MVP-002 顺手修复 4：诊断透传精简化（短文案 + 可展开 details）
+    let diagnosticHtml = '';
+    if (opts.diagnostic) {
+      diagnosticHtml =
+        '<details class="failure-diagnostic">' +
+        '  <summary>诊断信息</summary>' +
+        '  <pre class="diagnostic-detail">' + escapeHtml(opts.diagnostic) + '</pre>' +
+        '</details>';
+    }
+
     host.innerHTML =
       '<section class="panel panel-failure" role="alert" data-testid="failure-panel" data-kind="' + kind + '">' +
       '  <h2>' + escapeHtml(opts.title || '出错了') + '</h2>' +
       '  <p class="failure-text">' + escapeHtml(text) + escapeHtml(staleTime) + '</p>' +
       (opts.hint ? '<p class="failure-hint">' + escapeHtml(opts.hint) + '</p>' : '') +
+      diagnosticHtml +
       '  <div class="panel-actions">' +
       '    <button type="button" id="failure-primary" class="btn-primary">' + escapeHtml(primaryLabel) + '</button>' +
+      reconfigButton +
       '  </div>' +
       '</section>';
+
     el('failure-primary').addEventListener('click', function () {
       if (kind === 'internal') {
         window.location.reload();
@@ -971,6 +1156,23 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         opts.onPrimary();
       }
     });
+
+    // 重新配置按钮事件
+    if (showReconfig) {
+      const reconfigBtn = el('failure-reconfig');
+      if (reconfigBtn) {
+        reconfigBtn.addEventListener('click', function () {
+          // 清除旧配置并显示配置面板
+          Morrow.config.clear();
+          Morrow.ui.showConfigPanel(null, function (cfg) {
+            // 配置保存后重新启动
+            if (Morrow.app && typeof Morrow.app.bootWithConfig === 'function') {
+              Morrow.app.bootWithConfig(cfg);
+            }
+          });
+        });
+      }
+    }
   }
 
   function showResourceFailure() {
@@ -1073,6 +1275,40 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     el('draft-wipe').addEventListener('click', actions.onWipe);
   }
 
+  // LWW 确认对话（MVP-003）：未知结果处理时明确告知 LWW 风险。
+  function showLwwConfirmDialog(recordKey, input, callback) {
+    const host = el('panel-host');
+    const recordLabel = recordKey || '该记录';
+    host.innerHTML =
+      '<section class="panel" data-testid="lww-dialog">' +
+      '  <h2>确认重试？</h2>' +
+      '  <p class="panel-note">网络异常导致同步结果未知。如果其他设备已写入新值，重试可能会覆盖它们。</p>' +
+      '  <p class="panel-note"><strong>记录：</strong>' + escapeHtml(recordLabel) + '</p>' +
+      '  <div class="panel-actions">' +
+      '    <button type="button" id="lww-confirm" class="btn-primary">确认重试（同 key）</button>' +
+      '    <button type="button" id="lww-cancel" class="btn-secondary">取消</button>' +
+      '  </div>' +
+      '</section>';
+    el('lww-confirm').addEventListener('click', function () {
+      callback(true);
+    });
+    el('lww-cancel').addEventListener('click', function () {
+      callback(false);
+    });
+  }
+
+  // 旧慢读提示（MVP-003）：response 返回时若 data_revision 比现有渲染的旧，提示"数据已更新"。
+  function showStaleDataNotice() {
+    const host = el('today-error');
+    if (!host) return;
+    host.textContent = '数据已更新，请刷新查看最新内容';
+    host.hidden = false;
+    // 3 秒后自动隐藏
+    setTimeout(function () {
+      host.hidden = true;
+    }, 3000);
+  }
+
   function escapeHtml(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;')
@@ -1102,16 +1338,22 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     setLoginBusy: setLoginBusy,
     showShellPanel: showShellPanel,
     showDraftLogoutDialog: showDraftLogoutDialog,
+    showLwwConfirmDialog: showLwwConfirmDialog,
+    showStaleDataNotice: showStaleDataNotice,
     formatStamp: formatStamp,
   };
 })();
 
 ;
 /* ---- assets/js/today.js ---- */
-/* Morrow 今日行动页（MVP-002）：三锚点主导的单主轴页面。
- * 数据契约：get_today_context_v1 投影（C-02/C-03）；写操作 check/clear/set_day_type 全走 Morrow.transport.rpc。
+/* Morrow 今日行动页（MVP-003）：三锚点主导的单主轴页面。
+ * 数据契约：get_today_context_v1 投影（C-02/C-03）；写操作 check/clear/set_day_type 全走 Morrow.store.submitCommand。
  * 前端零业务计算：target_met / interval_met / deviation / stats / next_action 一律渲染 Core 投影。
- * 有限 optimistic：提交后行内 pending（"已提交待确认"），以 RPC 返回 + 重载 context 为准。
+ * MVP-003 升级：
+ * 1. 接入 store.js 三态状态机：server snapshot / per-record command / form draft 严格分离。
+ * 2. 单 flight 队列：同一 record 只有一个 in-flight，新意图等待前一 flight 返回。
+ * 3. note 600ms debounce：输入 600ms 后再发 update_anchor_note_v1。
+ * 4. 即时打卡：hit check 按钮下立即发 RPC。
  */
 (function () {
   'use strict';
@@ -1196,6 +1438,18 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   // ---------- 数据加载 ----------
   async function loadContext() {
     const res = await Morrow.transport.rpc('get_today_context_v1', {});
+    if (res.ok && res.result) {
+      // 旧慢读不盖新写：response 返回时若 data_revision 比现有渲染的旧，按 server snapshot 处理
+      const incomingRevision = res.result.data_revision || '0';
+      if (Morrow.store.shouldAcceptSnapshot(incomingRevision)) {
+        Morrow.store.setServerSnapshot(res.result, incomingRevision);
+      } else {
+        // 旧值 → 不覆盖 newer local，并在 ui 给出"数据已更新"提示
+        if (Morrow.ui && typeof Morrow.ui.showStaleDataNotice === 'function') {
+          Morrow.ui.showStaleDataNotice();
+        }
+      }
+    }
     return res;
   }
 
@@ -1208,7 +1462,11 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       showError(res.error.text || '加载今日上下文失败');
       return;
     }
-    renderToday(res.result);
+    // 从 store 获取最新 server snapshot 渲染
+    const snapshot = Morrow.store.getServerSnapshot();
+    if (snapshot.context) {
+      renderToday(snapshot.context);
+    }
   }
 
   // ---------- 今日页渲染 ----------
@@ -1300,6 +1558,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     } else if (recorded) {
       actions =
         '<button type="button" class="btn-row" data-act="edit" data-anchor="' + a.anchor_type + '">修正时间</button>' +
+        '<button type="button" class="btn-row" data-act="note" data-anchor="' + a.anchor_type + '">备注</button>' +
         '<button type="button" class="btn-row btn-row-danger" data-act="clear" data-anchor="' + a.anchor_type + '">清空</button>';
     } else {
       actions = '<button type="button" class="btn-row btn-row-primary" data-act="check" data-anchor="' + a.anchor_type + '">打卡</button>';
@@ -1355,6 +1614,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         const act = btn.getAttribute('data-act');
         if (act === 'check') openCheckEditor(ctx, type, false);
         else if (act === 'edit') openCheckEditor(ctx, type, true);
+        else if (act === 'note') openNoteEditor(ctx, type);
         else if (act === 'clear') confirmClear(ctx, type);
       });
     });
@@ -1391,18 +1651,48 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   }
 
   async function submitCheck(ctx, anchorType, actualAt, isEdit) {
+    const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
     markPending(anchorType, isEdit ? '正在修正…' : '已提交待确认…');
-    const res = await Morrow.transport.rpc('check_anchor_v1', {
-      biz_date: ctx.biz_date,
-      anchor_type: anchorType,
-      actual_at: actualAt,
-      note: '',
-    });
-    if (!res.ok) {
+
+    // 使用 store.submitCommand（单 flight 队列）
+    const result = await Morrow.store.submitCommand(
+      recordKey,
+      async function (input, idempotencyKey) {
+        const res = await Morrow.transport.rpc('check_anchor_v1', {
+          biz_date: input.biz_date,
+          anchor_type: input.anchor_type,
+          actual_at: input.actual_at,
+          note: input.note || '',
+        });
+        if (!res.ok) {
+          throw res.error;
+        }
+        // 返回完整 context 用于更新 server snapshot
+        const snapshot = Morrow.store.getServerSnapshot();
+        return {
+          context: snapshot.context,
+          dataRevision: snapshot.dataRevision,
+        };
+      },
+      {
+        biz_date: ctx.biz_date,
+        anchor_type: anchorType,
+        actual_at: actualAt,
+        note: '',
+      }
+    );
+
+    if (!result.ok) {
       clearPending(anchorType);
-      showError((isEdit ? '修正失败：' : '打卡失败：') + (res.error.text || '未知错误'));
-      return false; // 对话框保持打开，错误已显示
+      if (result.error && result.error.kind === 'cancelled') {
+        showError('已取消重试');
+      } else {
+        showError((isEdit ? '修正失败：' : '打卡失败：') + (result.error.text || '未知错误'));
+      }
+      return false;
     }
+
+    // 成功后重新加载 context
     await reload();
     return true;
   }
@@ -1415,16 +1705,41 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       primaryLabel: '确认清空',
       danger: true,
       onPrimary: async function () {
+        const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
         markPending(anchorType, '正在清空…');
-        const res = await Morrow.transport.rpc('clear_anchor_v1', {
-          biz_date: ctx.biz_date,
-          anchor_type: anchorType,
-        });
-        if (!res.ok) {
+
+        const result = await Morrow.store.submitCommand(
+          recordKey,
+          async function (input, idempotencyKey) {
+            const res = await Morrow.transport.rpc('clear_anchor_v1', {
+              biz_date: input.biz_date,
+              anchor_type: input.anchor_type,
+            });
+            if (!res.ok) {
+              throw res.error;
+            }
+            const snapshot = Morrow.store.getServerSnapshot();
+            return {
+              context: snapshot.context,
+              dataRevision: snapshot.dataRevision,
+            };
+          },
+          {
+            biz_date: ctx.biz_date,
+            anchor_type: anchorType,
+          }
+        );
+
+        if (!result.ok) {
           clearPending(anchorType);
-          showError('清空失败：' + (res.error.text || '未知错误'));
+          if (result.error && result.error.kind === 'cancelled') {
+            showError('已取消重试');
+          } else {
+            showError('清空失败：' + (result.error.text || '未知错误'));
+          }
           return false;
         }
+
         await reload();
         return true;
       },
@@ -1475,13 +1790,141 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   }
 
   async function submitDayType(ctx, code) {
-    const res = await Morrow.transport.rpc('set_day_type_v1', { biz_date: ctx.biz_date, code: code });
-    if (!res.ok) {
-      showError('更改日型失败：' + (res.error.text || '未知错误')); // DAY_PLAN_LOCKED 等如实展示
+    const recordKey = 'daytype:' + ctx.biz_date;
+
+    const result = await Morrow.store.submitCommand(
+      recordKey,
+      async function (input, idempotencyKey) {
+        const res = await Morrow.transport.rpc('set_day_type_v1', {
+          biz_date: input.biz_date,
+          code: input.code,
+        });
+        if (!res.ok) {
+          throw res.error;
+        }
+        const snapshot = Morrow.store.getServerSnapshot();
+        return {
+          context: snapshot.context,
+          dataRevision: snapshot.dataRevision,
+        };
+      },
+      {
+        biz_date: ctx.biz_date,
+        code: code,
+      }
+    );
+
+    if (!result.ok) {
+      if (result.error && result.error.kind === 'cancelled') {
+        showError('已取消重试');
+      } else {
+        showError('更改日型失败：' + (result.error.text || '未知错误'));
+      }
       return false;
     }
+
     await reload();
     return true;
+  }
+
+  // ---------- Note 编辑（600ms debounce） ----------
+  const noteDebounceTimers = new Map();
+
+  function openNoteEditor(ctx, anchorType) {
+    const a = (ctx.anchors || []).find(function (x) { return x.anchor_type === anchorType; });
+    const label = ANCHOR_LABEL[anchorType] || anchorType;
+    const currentNote = a.note || '';
+
+    openDialog({
+      title: '编辑' + label + '备注',
+      bodyHtml:
+        '<label class="field-label" for="note-input">备注</label>' +
+        '<textarea id="note-input" class="field-input" rows="4" maxlength="2000" placeholder="最多 2000 字符">' + esc(currentNote) + '</textarea>' +
+        '<p class="field-hint">输入后 600ms 自动保存</p>',
+      primaryLabel: '完成',
+      onPrimary: async function () {
+        // 对话框关闭时，如果有未保存的 debounce，立即触发保存
+        const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
+        const timer = noteDebounceTimers.get(recordKey);
+        if (timer) {
+          clearTimeout(timer);
+          noteDebounceTimers.delete(recordKey);
+          const noteInput = el('note-input');
+          if (noteInput) {
+            await saveNote(ctx, anchorType, noteInput.value);
+          }
+        }
+        return true;
+      },
+    });
+
+    // 绑定 note 输入的 600ms debounce
+    const noteInput = el('note-input');
+    if (noteInput) {
+      noteInput.addEventListener('input', function () {
+        const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
+
+        // 清除之前的 timer
+        const existingTimer = noteDebounceTimers.get(recordKey);
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+        }
+
+        // 设置新的 debounce timer
+        const timer = setTimeout(async function () {
+          noteDebounceTimers.delete(recordKey);
+          await saveNote(ctx, anchorType, noteInput.value);
+        }, 600);
+
+        noteDebounceTimers.set(recordKey, timer);
+      });
+    }
+
+    setTimeout(function () { if (noteInput) noteInput.focus(); }, 0);
+  }
+
+  async function saveNote(ctx, anchorType, note) {
+    const recordKey = Morrow.store.getCommandKey(ctx.biz_date, anchorType);
+    const a = (ctx.anchors || []).find(function (x) { return x.anchor_type === anchorType; });
+
+    if (!a || !a.id) {
+      showError('记录不存在，无法保存备注');
+      return;
+    }
+
+    const result = await Morrow.store.submitCommand(
+      recordKey,
+      async function (input, idempotencyKey) {
+        const res = await Morrow.transport.rpc('update_anchor_note_v1', {
+          record_id: input.record_id,
+          note: input.note,
+        });
+        if (!res.ok) {
+          throw res.error;
+        }
+        const snapshot = Morrow.store.getServerSnapshot();
+        return {
+          context: snapshot.context,
+          dataRevision: snapshot.dataRevision,
+        };
+      },
+      {
+        record_id: a.id,
+        note: note,
+      }
+    );
+
+    if (!result.ok) {
+      if (result.error && result.error.kind === 'cancelled') {
+        showError('已取消重试');
+      } else {
+        showError('保存备注失败：' + (result.error.text || '未知错误'));
+      }
+      return;
+    }
+
+    // 保存成功后重新加载 context
+    await reload();
   }
 
   // ---------- 对话框 ----------
@@ -1617,6 +2060,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   }
 
   // ---------- 入口 ----------
+  let focusRefreshTimer = null;
+  let onlineRefreshTimer = null;
+
   async function start() {
     setBusy(true);
     const res = await loadContext();
@@ -1629,11 +2075,47 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       showError(res.error.text || '加载今日上下文失败');
       return;
     }
-    renderToday(res.result);
+    const snapshot = Morrow.store.getServerSnapshot();
+    if (snapshot.context) {
+      renderToday(snapshot.context);
+    }
     // record_open：辅助真实使用证据；device_id 仅去重标识，失败不打扰用户。
     Morrow.transport
       .rpc('record_open_v1', { device_id: getDeviceId(), biz_date: res.result.biz_date })
       .catch(function () { /* 辅助证据，静默 */ });
+
+    // focus / online 事件：刷新只读（re-render context），不自动写（不触发 form 提交/打卡/草稿清空）
+    window.addEventListener('focus', handleFocusRefresh);
+    window.addEventListener('online', handleOnlineRefresh);
+
+    // store 状态变更监听：更新 UI 同步标识
+    Morrow.store.onStateChange(function (state, detail) {
+      if (Morrow.ui && typeof Morrow.ui.setSyncStatus === 'function') {
+        Morrow.ui.setSyncStatus(state, detail);
+      }
+    });
+  }
+
+  // focus 事件刷新（合并 2 秒内重复事件）
+  function handleFocusRefresh() {
+    if (focusRefreshTimer) {
+      clearTimeout(focusRefreshTimer);
+    }
+    focusRefreshTimer = setTimeout(async function () {
+      // 刷新只读：重新拉取 context，不自动写
+      await reload();
+    }, 2000);
+  }
+
+  // online 事件刷新（合并 2 秒内重复事件）
+  function handleOnlineRefresh() {
+    if (onlineRefreshTimer) {
+      clearTimeout(onlineRefreshTimer);
+    }
+    onlineRefreshTimer = setTimeout(async function () {
+      // 刷新只读：重新拉取 context，不自动写
+      await reload();
+    }, 2000);
   }
 
   Morrow.today = { start: start, reload: reload, _renderWizard: renderWizard };
@@ -1641,9 +2123,14 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
 ;
 /* ---- assets/js/app.js ---- */
-/* Morrow app 引导层（P0-006）：状态机 boot → auth_check → synced / config_required / auth_required / failed。
+/* Morrow app 引导层（MVP-003）：状态机 boot → auth_check → synced / config_required / auth_required / failed。
  * 依据 C-07：loading 失败进 failed（可重试，展示旧快照时间戳）；session 失效进 auth_required（不丢草稿）。
  * 全局兜底：SDK 缺失 → 资源失败面板；未捕获异常/Promise 拒绝 → 内部异常面板（不白屏）。
+ *
+ * MVP-003 扩展：
+ * 1. getCurrentUser()：供 drafts.js 获取当前 owner_uid（跨 owner 隔离）。
+ * 2. 登录成功后迁移匿名草稿到正式 owner namespace。
+ * 3. Session 失效恢复：登录后草稿不丢、回今日页。
  */
 (function () {
   'use strict';
@@ -1682,6 +2169,17 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     Morrow.ui.setSyncStatus('synced', '最后同步 ' + lastSyncStamp());
   }
 
+  // 当前登录用户（供 drafts.js 跨 owner 隔离使用）
+  let currentUser = null;
+
+  function getCurrentUser() {
+    return currentUser;
+  }
+
+  function setCurrentUser(user) {
+    currentUser = user;
+  }
+
   async function authCheck() {
     Morrow.ui.setSyncStatus('syncing', '正在校验会话…');
     const session = await Morrow.transport.currentSession();
@@ -1709,6 +2207,11 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     // 有本地会话 → 轻量 RPC 权威校验（网络/owner/Auth 三合一证据）。
     const verify = await Morrow.transport.verifyOwner();
     if (verify.ok) {
+      // 设置当前用户并迁移匿名草稿
+      setCurrentUser(session.session);
+      if (Morrow.drafts && typeof Morrow.drafts.migrateAnonymousDrafts === 'function') {
+        Morrow.drafts.migrateAnonymousDrafts();
+      }
       markSynced();
       Morrow.ui.showShellPanel(session.session);
       bindLogout();
@@ -1803,6 +2306,11 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 
   async function doLogout() {
     Morrow.ui.setSyncStatus('syncing', '正在退出…');
+    // 清除当前用户和命令状态
+    setCurrentUser(null);
+    if (Morrow.store && typeof Morrow.store.clearCommands === 'function') {
+      Morrow.store.clearCommands();
+    }
     await Morrow.transport.logout();
     Morrow.ui.setSyncStatus('none', '');
     Morrow.ui.showLoginPanel('');
@@ -1821,6 +2329,11 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       if (res.ok) {
         const verify = await Morrow.transport.verifyOwner();
         if (verify.ok) {
+          // 设置当前用户并迁移匿名草稿
+          setCurrentUser(res.user);
+          if (Morrow.drafts && typeof Morrow.drafts.migrateAnonymousDrafts === 'function') {
+            Morrow.drafts.migrateAnonymousDrafts();
+          }
           markSynced();
           Morrow.ui.showShellPanel(res.user);
           bindLogout();
@@ -1898,7 +2411,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     });
   }
 
-  Morrow.app = { boot: boot };
+  Morrow.app = { boot: boot, getCurrentUser: getCurrentUser, setCurrentUser: setCurrentUser, bootWithConfig: bootWithConfig };
   Morrow.APP_RELEASE_KEYS = { RELEASE_KEY: RELEASE_KEY, LAST_SYNC_KEY: LAST_SYNC_KEY };
 
   installGlobalGuards();
