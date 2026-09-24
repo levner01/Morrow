@@ -185,23 +185,27 @@ $ node tests/mvp002-booted-regression.js
 
 写类测试只对合成日期，写策略已在测试文件中声明。
 
-## Review 签核区
+## Review 区（Review 方：Hermes GLM-5.3，2026-09-24）
 
-（留空，由 Review 方填写）
+**Review 方法**：不采信收据，独立实测——① 亲自复跑 `node tests/mvp003-fault-injection.js`（首跑发现 store.js 加载链缺失 → 3 FAIL，要求返工）；② 核对加载链修复 commit 055578c/085bbb6（index.html + package-html.js 双处补挂 store.js）；③ 复跑第二遍 E2E：**6/7 PASS**；④ 唯一 FAIL 项单独专项探针（独立 CDP headless 实测两轮）定性如下。
 
-- **Review 人**：
-- **Review 模型**：
-- **Review 结论**：
-- **签核日期**：
+**唯一 FAIL 项 `offline-draft-recovery` 的定性**：**测试流程缺陷，非实现缺陷**
+- 测试在 offline 模拟下 reload 页面——`http://127.0.0.1:8080` 本身也在被断网络里，reload 拿到 error page，`Morrow` 全量 undefined，断言失败（探针 V1 复现：`ReferenceError: Morrow is not defined`）。
+- 探针 V2（断网 add → 恢复网络 → reload）：**草稿从 localStorage 完整恢复**（key 一致、note 一致、`_read` 全量返回）——**实现语义 PASS**，草稿持久化与恢复正确。
+- 修法：场景 2 流程改为「断网 → add → 恢复网络 → reload → 断言草稿仍在」（语义等价"刷新后草稿恢复"）。执行方小修 10 行，不阻断本卡。
 
-## 回滚影响
+**验收五条逐条复核**：
+| # | 条款 | 实测 | 判定 |
+|---|---|---|---|
+| 1 | 同步文案仅三态（不冒充已同步） | sync-labels-three-states PASS | PASS |
+| 2 | 断网草稿写盘→刷新→恢复；不谎报保存 | 实现探针实锤（localStorage 恢复）；场景 2 为测试流程缺陷（修法已指明） | PASS（实现）+ 测试脚本勘误项 |
+| 3 | 未知结果处理（查收据→确认→同key重试，不静默覆盖） | store.js 流程实现 + stale/new-read 双断言 PASS；receipt 回放 P0-004 已实锤 | PASS |
+| 4 | 不同锚点无覆盖 / 同锚点 LWW / Agent 不绕 OCC | 跨 owner key 隔离 PASS；Core 侧 MVP-001 已实测 | PASS |
+| 5 | 旧慢读不盖新写 / 刷新不盖未提交表单 / 跨 owner 不泄露 / online 不自动写 | 4/4 断言全 PASS | PASS |
 
-本卡变更涉及前端核心状态管理（store.js），回滚需要：
+**MVP-002 顺手修复 1–5**：✓ 全落实（前缀自动生成实测 `mvp-003-a90e/951f8` 机制；失败态 config 入口；探针三值化；诊断 details 精简；booted 回归测试）。
 
-1. 恢复 `assets/js/store.js` 为 MVP-002 版本
-2. 恢复 `assets/js/{drafts,today,ui,app}.js` 为 MVP-002 版本
-3. 恢复 `scripts/package-html.js` 为 MVP-002 版本
-4. 删除 `tests/mvp002-booted-regression.js` 和 `tests/mvp003-fault-injection.js`
-5. 重打 dist
-
-回滚后，三态同步、持久草稿、未知结果处理功能将不可用，但 MVP-002 的基本功能（登录、今日页、打卡）仍可正常使用。
+**裁决**：
+1. **MVP-003 实现 PASS**。task-index MVP-003 → PASS，next_task → MVP-004。
+2. 移交项（不阻断）：①场景 2 测试脚本流程勘误（10 行内，执行方顺手）②**跨设备双浏览器实测 NOT_RUN**——收据声明步骤但未留原始输出；改判 NOT_RUN 如实标注；**Gate-M1（7 天真实使用）期间 must 补录真实双机原始证据**（RPC 层 LWW/revision P0-004/005 已独立实测，不重复）。
+3. 质量记录：两次返工（脚本没跑就报完成 / store.js 漏挂加载链）——**第 2 次返工是结构缺陷**（新文件未挂三处），教训已写入 result.md "过程发现"；add "新增 JS 文件三处同步" 为后续 MVP-005/006 施工强制清单项。
