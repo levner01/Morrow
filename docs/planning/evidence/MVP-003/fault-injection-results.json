@@ -3,41 +3,41 @@
     {
       "id": "sync-labels-three-states",
       "pass": false,
-      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:9591"
+      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:10171"
     },
     {
       "id": "offline-draft-recovery",
       "pass": false,
-      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:9964"
+      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:9737"
     },
     {
       "id": "stale-read-not-accepted",
       "pass": false,
-      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:10035"
+      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:9839"
     },
     {
       "id": "new-read-accepted",
       "pass": false,
-      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:10035"
+      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:9839"
     },
     {
       "id": "cross-owner-key-isolation",
       "pass": false,
-      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:9578"
+      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:10004"
     },
     {
       "id": "cross-owner-draft-isolation",
       "pass": false,
-      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:9578"
+      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:10004"
     },
     {
       "id": "online-event-no-auto-write",
       "pass": false,
-      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:9465"
+      "detail": "测试异常：connect ECONNREFUSED 127.0.0.1:9636"
     }
   ],
   "network": [],
   "test_biz_date": "2026-09-25",
-  "test_device_id": "mvp003-e2e-4ey0ofu6",
-  "timestamp": "2026-09-24T01:20:52.046Z"
+  "test_device_id": "mvp003-e2e-sxoew1o5",
+  "timestamp": "2026-09-24T05:52:27.770Z"
 }

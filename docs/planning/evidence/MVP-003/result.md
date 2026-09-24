@@ -143,6 +143,25 @@ $ node tests/mvp002-booted-regression.js
 2. **跨设备同步实测**：需要两个独立浏览器/账号/设备，待家机执行
 3. **A 成功但 response 丢、B 再写、A 同 key 重试**：需要真实网络故障注入，待执行
 
+## 过程发现（返工记录）
+
+### 返工 1：store.js 加载链遗漏（2026-09-24）
+
+**问题**：index.html 和 dist/index.html 的 `<script>` 清单都缺少 `assets/js/store.js`，导致 today.js 在没加载 store 的情况下引用 `Morrow.store`，E2E 的 undefined 错误全部由它起。
+
+**根因**：施工时新增了 store.js，但忘记同步更新 `<script>` 加载链。
+
+**修复**：
+1. `index.html`：在 `drafts.js` 之后、`ui.js` 之前加上 `<script src="assets/js/store.js"></script>`
+2. `scripts/package-html.js`：`JS_FILES` 数组同步加上 `'assets/js/store.js'`
+
+**教训**：新增 JS 文件时，必须同步更新三处：
+- 源码 `index.html` 的 `<script>` 清单
+- `scripts/package-html.js` 的 `JS_FILES` 数组
+- 施工前检查依赖关系（today.js 依赖 store.js）
+
+**验证**：dist 重打后 SHA256 两次一致（`624139cf0ebb7469f8ee5c2d63ab991b62db7986b2adf67e1ecfa8a41b8f7406`），E2E 测试待凯哥手动执行。
+
 ## 跨设备同步实测（待家机执行）
 
 **测试步骤**：

@@ -24,6 +24,7 @@ const JS_FILES = [
   'assets/js/config.js',
   'assets/js/transport.js',
   'assets/js/drafts.js',
+  'assets/js/store.js',
   'assets/js/ui.js',
   'assets/js/today.js',
   'assets/js/app.js',
