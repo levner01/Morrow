@@ -1,0 +1,215 @@
+{
+  "task": "MVP-005",
+  "ran_at_utc": "2026-09-28T13:46:36.932Z",
+  "page": "http://127.0.0.1:8095/dist/index.html",
+  "total": 41,
+  "pass": 41,
+  "fail": 0,
+  "results": [
+    {
+      "id": "entry-position",
+      "pass": true,
+      "detail": "{\"belowDaytype\":true,\"aboveHeatmap\":true}"
+    },
+    {
+      "id": "t2-filename",
+      "pass": true,
+      "detail": "life-workspace_2026-09-28_schema-v1.json"
+    },
+    {
+      "id": "t2-container-shape",
+      "pass": true,
+      "detail": "keys=schema_version,exported_at,app_version,workspace,data,counts,integrity"
+    },
+    {
+      "id": "t2-revision-digit-string",
+      "pass": true,
+      "detail": "revision=461"
+    },
+    {
+      "id": "t2-counts-match-data",
+      "pass": true,
+      "detail": "{\"life_data\":8,\"agent_advice\":0,\"activity_log\":192,\"automation_rules\":0,\"agent_clients\":6,\"workspace_settings\":1}"
+    },
+    {
+      "id": "t2-version-text-typed",
+      "pass": true,
+      "detail": "life_data 行全部 version:string"
+    },
+    {
+      "id": "t2-secret-scan-clean",
+      "pass": true,
+      "detail": "[]"
+    },
+    {
+      "id": "t2-no-cred-leak",
+      "pass": true,
+      "detail": "pubkey/password/email 均不在文件中"
+    },
+    {
+      "id": "t2-roundtrip-sha",
+      "pass": true,
+      "detail": "bf04827c5968a67744c54d0f82f9b28840a5a686dece353a9f095897db949e0f"
+    },
+    {
+      "id": "t2-integrity-shape",
+      "pass": true,
+      "detail": "{\"algorithm\":\"SHA-256\",\"canonicalization\":\"RFC8785\",\"data_sha256\":\"bf04827c5968a67744c54d0f82f9b28840a5a686dece353a9f095897db949e0f\"}"
+    },
+    {
+      "id": "t2-status-ok",
+      "pass": true,
+      "detail": "已导出 life-workspace_2026-09-28_schema-v1.json（92.3 KiB，SHA-256 校验通过）"
+    },
+    {
+      "id": "t2-closed-empty",
+      "pass": true,
+      "detail": "agent_advice/automation_rules 固定空数组"
+    },
+    {
+      "id": "t3-filename",
+      "pass": true,
+      "detail": "life-workspace_2026-09-28_schema-v1.json"
+    },
+    {
+      "id": "t3-container-shape",
+      "pass": true,
+      "detail": "keys=schema_version,exported_at,app_version,workspace,data,counts,integrity"
+    },
+    {
+      "id": "t3-revision-digit-string",
+      "pass": true,
+      "detail": "revision=461"
+    },
+    {
+      "id": "t3-counts-match-data",
+      "pass": true,
+      "detail": "{\"life_data\":8,\"agent_advice\":0,\"activity_log\":192,\"automation_rules\":0,\"agent_clients\":6,\"workspace_settings\":1}"
+    },
+    {
+      "id": "t3-version-text-typed",
+      "pass": true,
+      "detail": "life_data 行全部 version:string"
+    },
+    {
+      "id": "t3-secret-scan-clean",
+      "pass": true,
+      "detail": "[]"
+    },
+    {
+      "id": "t3-no-cred-leak",
+      "pass": true,
+      "detail": "pubkey/password/email 均不在文件中"
+    },
+    {
+      "id": "t3-roundtrip-sha",
+      "pass": true,
+      "detail": "bf04827c5968a67744c54d0f82f9b28840a5a686dece353a9f095897db949e0f"
+    },
+    {
+      "id": "t3-integrity-shape",
+      "pass": true,
+      "detail": "{\"algorithm\":\"SHA-256\",\"canonicalization\":\"RFC8785\",\"data_sha256\":\"bf04827c5968a67744c54d0f82f9b28840a5a686dece353a9f095897db949e0f\"}"
+    },
+    {
+      "id": "t3-multipage-cursor-reqs",
+      "pass": true,
+      "detail": "带 id=gt. 游标的请求数=103"
+    },
+    {
+      "id": "t3-counts-match-full",
+      "pass": true,
+      "detail": "pageSize2: {\"life_data\":8,\"agent_advice\":0,\"activity_log\":192,\"automation_rules\":0,\"agent_clients\":6,\"workspace_settings\":1} vs full: {\"life_data\":8,\"agent_advice\":0,\"activity_log\":192,\"automation_rules\":0,\"agent_clients\":6,\"workspace_settings\":1}"
+    },
+    {
+      "id": "t3-sha-match-full",
+      "pass": true,
+      "detail": "同一数据 → 同一 data_sha256"
+    },
+    {
+      "id": "t4-filename",
+      "pass": true,
+      "detail": "life-workspace_2026-09-28_schema-v1.json"
+    },
+    {
+      "id": "t4-container-shape",
+      "pass": true,
+      "detail": "keys=schema_version,exported_at,app_version,workspace,data,counts,integrity"
+    },
+    {
+      "id": "t4-revision-digit-string",
+      "pass": true,
+      "detail": "revision=461"
+    },
+    {
+      "id": "t4-counts-match-data",
+      "pass": true,
+      "detail": "{\"life_data\":8,\"agent_advice\":0,\"activity_log\":192,\"automation_rules\":0,\"agent_clients\":6,\"workspace_settings\":1}"
+    },
+    {
+      "id": "t4-version-text-typed",
+      "pass": true,
+      "detail": "life_data 行全部 version:string"
+    },
+    {
+      "id": "t4-secret-scan-clean",
+      "pass": true,
+      "detail": "[]"
+    },
+    {
+      "id": "t4-no-cred-leak",
+      "pass": true,
+      "detail": "pubkey/password/email 均不在文件中"
+    },
+    {
+      "id": "t4-roundtrip-sha",
+      "pass": true,
+      "detail": "bf04827c5968a67744c54d0f82f9b28840a5a686dece353a9f095897db949e0f"
+    },
+    {
+      "id": "t4-integrity-shape",
+      "pass": true,
+      "detail": "{\"algorithm\":\"SHA-256\",\"canonicalization\":\"RFC8785\",\"data_sha256\":\"bf04827c5968a67744c54d0f82f9b28840a5a686dece353a9f095897db949e0f\"}"
+    },
+    {
+      "id": "t4-conflict-retried",
+      "pass": true,
+      "detail": "state 读取 4 次（≥2 轮 R0/R1）"
+    },
+    {
+      "id": "t4-no-mixed-snapshot",
+      "pass": true,
+      "detail": "成功包 revision=461（真实值，篡改值未入包）"
+    },
+    {
+      "id": "t4-sha-stable",
+      "pass": true,
+      "detail": "与 T2 同数据同哈希"
+    },
+    {
+      "id": "t5-offline-error-shown",
+      "pass": true,
+      "detail": "无法连接到服务器，请检查网络后重试"
+    },
+    {
+      "id": "t5-no-partial-download",
+      "pass": true,
+      "detail": "断网下零下载产出"
+    },
+    {
+      "id": "viewport-1280-no-hscroll",
+      "pass": true,
+      "detail": "scrollW=1280"
+    },
+    {
+      "id": "viewport-375-no-hscroll",
+      "pass": true,
+      "detail": "scrollW=375"
+    },
+    {
+      "id": "viewport-320-no-hscroll",
+      "pass": true,
+      "detail": "scrollW=320"
+    }
+  ]
+}

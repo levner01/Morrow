@@ -1,13 +1,13 @@
 {
   "release": {
-    "id": "mvp-004-a2c07ceb99e2",
-    "built_at_utc": "2026-09-28T09:13:36.446Z",
+    "id": "mvp-005-4624e4dc3237",
+    "built_at_utc": "2026-09-28T11:28:31.233Z",
     "reproducibility_note": "dist/index.html 不含时间戳；同一源输入两次构建 SHA256 必相同。复现校验请排除本字段 built_at_utc。"
   },
   "source_files": [
     {
       "path": "assets/css/app.css",
-      "sha256": "38c25af98a8de3e6c227f104da949ea676061ec51c12cb27756cedfd5a2c6878"
+      "sha256": "929d23c7e248ea6e9c75706e392e78f3ba38dc2d556d408e5ff99c8a1033b47f"
     },
     {
       "path": "assets/vendor/supabase-js@2.116.0.umd.js",
@@ -19,7 +19,7 @@
     },
     {
       "path": "assets/js/transport.js",
-      "sha256": "21607bcabd5868d4ab0f6ebc8d94e87977aa56df8589b4e99f70aad3d1badc52"
+      "sha256": "631e00d6fbdd2e36b1ebc4736ee4eb4624afe0f304a8d9040b483dbaf7c1cb6b"
     },
     {
       "path": "assets/js/drafts.js",
@@ -38,15 +38,19 @@
       "sha256": "1cc339c116630574185451d8a12055e8114cb2a6883317aa590d979dbfa3ad5e"
     },
     {
+      "path": "assets/js/export.js",
+      "sha256": "0cd89e549550f530cf516223e93356d9b19df72f8ec38588c0447fa17afda6be"
+    },
+    {
       "path": "assets/js/today.js",
-      "sha256": "25ac2a81f847eccf228ec056e1576f085a8210ee4192f056211d516bcdaf66b0"
+      "sha256": "3f82e79c89a218812a568bbd70bdc251018d40e623c1ee9fe0648b08c37c323e"
     },
     {
       "path": "assets/js/app.js",
       "sha256": "bdbc7cf22096e0658eea9ac59afb39d70d9ac7bcdcfc27cd25ab6911f0c0fb0e"
     }
   ],
-  "source_sha256": "a2c07ceb99e2fd79e1ccec454cc460df43232c381244b75799e0e191947b0496",
+  "source_sha256": "4624e4dc3237eaeebca85ff5c58deae1e2a30d41c90c64a7e110e73b3c52c987",
   "sdk": {
     "name": "@supabase/supabase-js",
     "version": "2.116.0",
@@ -57,7 +61,7 @@
   "entry_source": "index.html",
   "dist": {
     "path": "dist/index.html",
-    "sha256": "179d9d9121c3871767e63aa9941763e40ed2efa1fa22e2cf5dc51a60ad270cc5"
+    "sha256": "6a23e56c089ca10f5e78d38e0c2eea2959bb08ec498c6f852ee8eecc1b21f143"
   },
   "pages": {
     "url": "https://levner01.github.io/Morrow/",

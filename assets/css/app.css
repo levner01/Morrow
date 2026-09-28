@@ -257,6 +257,18 @@ html.morrow-booted #boot-fallback { display: none; }
 .daytype-actions { display: flex; justify-content: flex-start; }
 .btn-today-secondary { font-size: 0.95rem; }
 
+/* 数据导出（MVP-005）：今日页次级位置，视觉权重低于主轴 */
+.export-actions { display: flex; justify-content: flex-start; margin-top: 4px; }
+.export-status {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  word-break: break-all;
+}
+.export-status[data-kind='error'] { color: var(--danger); }
+.export-status[data-kind='ok'] { color: var(--ok); }
+.export-status[data-kind='retry'] { color: var(--warn); }
+
 /* 对话框 */
 .dialog-backdrop {
   position: fixed;

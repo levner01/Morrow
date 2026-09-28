@@ -160,6 +160,9 @@
       '</div>'
     );
 
+    // 数据导出入口（MVP-005）：「更改今日日型」同级之下的次级位置；失败不打扰主区
+    html.push('<div id="export-host"></div>');
+
     // 近 30 天热力图（MVP-004）：次要位置，在三锚点/下一步主轴之下；失败不打扰主区
     html.push('<div id="heatmap-host"></div>');
     html.push('</div>');
@@ -170,6 +173,11 @@
     // 热力图独立加载（不阻塞今日主区渲染；内部自处理错误与重试）
     if (Morrow.heatmap && typeof Morrow.heatmap.mount === 'function') {
       Morrow.heatmap.mount(document.getElementById('heatmap-host'), ctx.biz_date).catch(function () { /* 组件内已兜底 */ });
+    }
+
+    // 导出入口独立渲染（无异步加载，纯本地按钮；点击后才发起网络）
+    if (Morrow.export && typeof Morrow.export.mount === 'function') {
+      Morrow.export.mount(document.getElementById('export-host'));
     }
   }
 

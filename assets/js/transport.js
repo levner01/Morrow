@@ -205,6 +205,64 @@
     }
   }
 
+  // PostgREST 直读通道（MVP-005 导出）：返回原始响应文本，绝不 JSON.parse。
+  // 为什么不经 supabase-js：PostgrestClient 默认 JSON.parse，超 JS 安全整数（>2^53）的
+  // BIGINT（服务端已 ::text 除外）与超长数字会被 double 破坏；导出链路必须自管保真解析。
+  // cache:'no-store'：一致性快照禁止页面 GET 命中缓存（带 Authorization 头的请求本不被
+  // 共享缓存存储，此处双保险）。token 只在此函数作用域内拼接请求头，绝不进入返回值。
+  async function restText(pathAndQuery) {
+    if (!client || !currentConfig) {
+      return { ok: false, error: { kind: 'internal', text: '客户端未初始化', retryable: false } };
+    }
+    let token = null;
+    try {
+      const res = await client.auth.getSession();
+      const s = res.data && res.data.session;
+      token = s ? s.access_token : null;
+    } catch (err) {
+      return { ok: false, error: normalizeError(err) };
+    }
+    if (!token) {
+      return { ok: false, error: { kind: 'auth_expired', text: '登录已过期，请重新登录', retryable: false } };
+    }
+    let resp = null;
+    try {
+      resp = await timeoutFetch(currentConfig.url + '/rest/v1/' + String(pathAndQuery).replace(/^\/+/, ''), {
+        method: 'GET',
+        headers: {
+          apikey: currentConfig.key,
+          Accept: 'application/json',
+          Authorization: 'Bearer ' + token,
+        },
+        cache: 'no-store',
+      });
+    } catch (err) {
+      return { ok: false, error: normalizeError(err) };
+    }
+    let text = '';
+    try {
+      text = await resp.text();
+    } catch (err) {
+      return { ok: false, error: normalizeError(err) };
+    }
+    if (resp.status === 401) {
+      return { ok: false, error: { kind: 'auth_expired', text: '登录已过期，请重新登录', retryable: false } };
+    }
+    if (!resp.ok) {
+      const kind = resp.status === 429 ? 'rate_limited' : resp.status >= 500 ? 'server' : 'invalid_request';
+      return {
+        ok: false,
+        status: resp.status,
+        error: {
+          kind: kind,
+          text: '导出读取失败（HTTP ' + resp.status + '）',
+          retryable: resp.status === 429 || resp.status >= 500,
+        },
+      };
+    }
+    return { ok: true, status: resp.status, text: text };
+  }
+
   async function logout() {
     if (!client) return;
     try {
@@ -245,6 +303,7 @@
     refresh: refresh,
     verifyOwner: verifyOwner,
     rpc: rpc,
+    restText: restText,
     logout: logout,
     normalizeError: normalizeError,
   };
