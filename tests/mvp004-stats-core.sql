@@ -54,8 +54,11 @@ begin
   if not found then
     raise exception 'SETUP_FAIL: workspace_settings 不存在';
   end if;
+  -- 0015 回归纪律：DELETE 排除 p0test 铁证 fixture——保留真库雷 p0test:anchor-f1
+  --（2026-09-17，planned=true∧actual 非空∧live），供 T13 在雷真实存在下验证 >= 修复
   delete from public.life_data
-   where user_id = v_owner and module in ('anchor','day_type');
+   where user_id = v_owner and module in ('anchor','day_type')
+     and entity_key not like 'p0test:%';
   v_proof := v_proof || jsonb_build_object('T00_setup', 'pass', 'owner', v_owner, 'today', v_today);
 
   -- ========== T01 / F09：45 天连续 → streak=45，30 天窗口不裁剪 ==========
@@ -501,6 +504,152 @@ begin
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_owner::text, 'role', 'authenticated')::text, true);
   v_proof := v_proof || jsonb_build_object('T10_public_rpc_owner_denied_readonly', 'pass');
+
+  -- ========== T12 / 0015 回归：超记日多记不罚（rec > den 不断链、不误标在途） ==========
+  -- 构造：v_today-5..v_today 全记录；v_today-3 与今日各补 1 条多余 live 行（rec=den+1，
+  -- 模拟补记/导入/数据修复产生的重复行）。修前：两日 complete=(den+1=den)=false →
+  -- v_today-3 已结算断链（streak=2）、今日被误标 provisional；修后（>=）：streak=6、
+  -- today_complete=true、两格 provisional=false。
+  delete from public.life_data
+   where user_id = v_owner and module = 'anchor' and entity_key like 'mvp004test:%';
+  v_d := v_today - 5;
+  while v_d <= v_today loop
+    v_plan := private.resolve_day_plan(
+      (select s from public.workspace_settings s where s.user_id = v_owner), v_d);
+    v_wx := (v_plan ->> 'workout_expected')::boolean;
+    insert into public.life_data (user_id, module, entity_key, biz_date, payload, source_type, source_id)
+    values
+      (v_owner, 'anchor', 'mvp004test:' || v_d || ':wake', v_d,
+       jsonb_build_object('payload_v',1,'anchor_type','wake','planned',true,
+         'target_at', v_d::text || 'T06:50:00+08:00',
+         'actual_at', v_d::text || 'T06:47:00+08:00',
+         'status','recorded','note','','plan_version','1'), 'system', gen_random_uuid()),
+      (v_owner, 'anchor', 'mvp004test:' || v_d || ':lights_off', v_d,
+       jsonb_build_object('payload_v',1,'anchor_type','lights_off','planned',true,
+         'target_at', v_d::text || 'T22:15:00+08:00',
+         'actual_at', v_d::text || 'T22:10:00+08:00',
+         'status','recorded','note','','plan_version','1'), 'system', gen_random_uuid());
+    if v_wx then
+      insert into public.life_data (user_id, module, entity_key, biz_date, payload, source_type, source_id)
+      values
+        (v_owner, 'anchor', 'mvp004test:' || v_d || ':workout_end', v_d,
+         jsonb_build_object('payload_v',1,'anchor_type','workout_end','planned',true,
+           'target_at', v_d::text || 'T19:15:00+08:00',
+           'actual_at', v_d::text || 'T19:00:00+08:00',
+           'status','recorded','note','','plan_version','1'), 'system', gen_random_uuid());
+    end if;
+    v_d := v_d + 1;
+  end loop;
+  -- 多余行 ×2：同 anchor_type 重复、planned=true、actual 达标（rec 口径必计入）
+  insert into public.life_data (user_id, module, entity_key, biz_date, payload, source_type, source_id)
+  values
+    (v_owner, 'anchor', 'mvp004test:' || (v_today - 3) || ':extra', v_today - 3,
+     jsonb_build_object('payload_v',1,'anchor_type','wake','planned',true,
+       'target_at', (v_today - 3)::text || 'T06:50:00+08:00',
+       'actual_at', (v_today - 3)::text || 'T06:48:00+08:00',
+       'status','recorded','note','','plan_version','1'), 'system', gen_random_uuid()),
+    (v_owner, 'anchor', 'mvp004test:' || v_today || ':extra', v_today,
+     jsonb_build_object('payload_v',1,'anchor_type','wake','planned',true,
+       'target_at', v_today::text || 'T06:50:00+08:00',
+       'actual_at', v_today::text || 'T06:48:00+08:00',
+       'status','recorded','note','','plan_version','1'), 'system', gen_random_uuid());
+
+  v_env := jsonb_build_object('api_version','1','idempotency_key',gen_random_uuid(),
+    'input', jsonb_build_object('from', v_today - 5, 'to', v_today));
+  v_r := private.cmd_get_anchor_history_v1(v_owner, v_env);
+  if not (v_r ->> 'ok')::boolean then
+    raise exception 'ASSERT T12 history 失败: %', v_r;
+  end if;
+  v_stats := v_r -> 'result' -> 'stats';
+  v_days := v_r -> 'result' -> 'days';
+  declare
+    v_d3_need int;
+    v_dt_need int;
+    v_cell3 jsonb := v_days -> 2;   -- 窗口 v_today-5 起，v_today-3 = 下标 2
+    v_cellt jsonb := v_days -> 5;   -- 今日 = 下标 5
+  begin
+    v_plan := private.resolve_day_plan(
+      (select s from public.workspace_settings s where s.user_id = v_owner), v_today - 3);
+    v_d3_need := case when (v_plan ->> 'workout_expected')::boolean then 3 else 2 end;
+    v_plan := private.resolve_day_plan(
+      (select s from public.workspace_settings s where s.user_id = v_owner), v_today);
+    v_dt_need := case when (v_plan ->> 'workout_expected')::boolean then 3 else 2 end;
+    -- 0015 L199+0013 walk 修复：超记日不断链，streak=6（修前=2）
+    if (v_stats ->> 'streak_days')::int <> 6 then
+      raise exception 'ASSERT T12 失败（超记日不得断链，streak 应=6，实际 %）: %',
+        v_stats ->> 'streak_days', v_stats;
+    end if;
+    -- 0015 L182 修复：今日多记 → today_complete=true（修前 false）
+    if (v_stats ->> 'today_complete')::boolean is not true
+       or (v_stats ->> 'today_provisional')::boolean is not false then
+      raise exception 'ASSERT T12 失败（今日多记应 complete，today 状态说谎）: %', v_stats;
+    end if;
+    -- 格级：recorded 如实不 cap（den+1）；0015 L104 修复：未结算多记日不得错标 provisional
+    if (v_cell3 ->> 'recorded_count')::int <> v_d3_need + 1
+       or (v_cell3 ->> 'denominator')::int <> v_d3_need
+       or (v_cell3 ->> 'provisional')::boolean is not false then
+      raise exception 'ASSERT T12 失败（超记格 recorded 应=den+1 且不标在途）: %', v_cell3;
+    end if;
+    if (v_cellt ->> 'recorded_count')::int <> v_dt_need + 1
+       or (v_cellt ->> 'provisional')::boolean is not false then
+      raise exception 'ASSERT T12 失败（今日超记格不得标 provisional）: %', v_cellt;
+    end if;
+    v_proof := v_proof || jsonb_build_object('T12_over_recorded_no_penalty', 'pass',
+      'streak_days', 6, 'today_complete', true,
+      'cell_t-3_recorded', v_d3_need + 1, 'cell_today_recorded', v_dt_need + 1,
+      'note', 'recorded 如实输出 den+1 不 cap；修前 streak=2 且今日误标在途');
+  end;
+
+  -- ========== T13 / 0015 回归：真库雷 p0test:anchor-f1 排雷（不 DELETE p0test 前提） ==========
+  -- 雷：p0test:anchor-f1（biz_date=2026-09-17，周四 isodow=4——Review 通知误记为周六，
+  -- ordinary_workday 与 weekend 同为分母 2，结论不受影响；planned=true∧actual 非空∧live）。
+  -- 先断言雷在预期状态（防未来清雷导致本测试假绿），再铺 09-17 两项计划行 → rec=3（2 计划+1 雷）。
+  if not exists (select 1 from public.life_data d
+                 where d.user_id = v_owner and d.entity_key = 'p0test:anchor-f1'
+                   and d.biz_date = '2026-09-17' and d.deleted_at is null
+                   and (d.payload ->> 'planned')::boolean
+                   and d.payload ->> 'actual_at' is not null) then
+    raise exception 'SETUP_FAIL: 真库雷 p0test:anchor-f1 不在预期状态（缺失/变形/已删），T13 无法踩雷';
+  end if;
+  delete from public.life_data
+   where user_id = v_owner and module = 'anchor' and biz_date = '2026-09-17'
+     and entity_key like 'mvp004test:%';
+  insert into public.life_data (user_id, module, entity_key, biz_date, payload, source_type, source_id)
+  values
+    (v_owner, 'anchor', 'mvp004test:2026-09-17:wake', '2026-09-17',
+     jsonb_build_object('payload_v',1,'anchor_type','wake','planned',true,
+       'target_at', '2026-09-17T06:50:00+08:00',
+       'actual_at', '2026-09-17T06:47:00+08:00',
+       'status','recorded','note','','plan_version','1'), 'system', gen_random_uuid()),
+    (v_owner, 'anchor', 'mvp004test:2026-09-17:lights_off', '2026-09-17',
+     jsonb_build_object('payload_v',1,'anchor_type','lights_off','planned',true,
+       'target_at', '2026-09-17T22:15:00+08:00',
+       'actual_at', '2026-09-17T22:10:00+08:00',
+       'status','recorded','note','','plan_version','1'), 'system', gen_random_uuid());
+
+  v_env := jsonb_build_object('api_version','1','idempotency_key',gen_random_uuid(),
+    'input', jsonb_build_object('from', '2026-09-17', 'to', '2026-09-17'));
+  v_r := private.cmd_get_anchor_history_v1(v_owner, v_env);
+  if not (v_r ->> 'ok')::boolean then
+    raise exception 'ASSERT T13 history 失败: %', v_r;
+  end if;
+  v_days := v_r -> 'result' -> 'days';
+  v_stats := v_r -> 'result' -> 'stats';
+  -- 断言 1：雷被真实计入 rec（3=2 计划+1 雷，非擦肩而过）；格 complete 语义 = rec>=den 不标在途
+  if (v_days -> 0 ->> 'recorded_count')::int <> 3
+     or (v_days -> 0 ->> 'denominator')::int <> 2
+     or (v_days -> 0 ->> 'provisional')::boolean is not false then
+    raise exception 'ASSERT T13 失败（雷日 recorded 应=3、denominator=2、不标在途）: %', v_days -> 0;
+  end if;
+  -- 断言 2：complete=true 直接证据——单天窗口 walk 穿过 09-17（streak=1；修前等号判死 → streak=0）
+  -- walk 下界 tracking_started_on=08-15：09-16 无记录已结算 → 恰停在 1，无需额外铺数据
+  if (v_stats ->> 'streak_days')::int <> 1 then
+    raise exception 'ASSERT T13 失败（雷日应 complete=true，单天窗口 streak 应=1，实际 %）: %',
+      v_stats ->> 'streak_days', v_stats;
+  end if;
+  v_proof := v_proof || jsonb_build_object('T13_p0test_landmine_defused', 'pass',
+    'landmine', 'p0test:anchor-f1@2026-09-17', 'recorded_count', 3, 'denominator', 2,
+    'streak_single_day', 1, 'dow', 'thu(isodow=4，Review 通知误记周六，denominator 同为 2)');
 
   raise exception 'MVP004_PROOF %', v_proof;
 end;

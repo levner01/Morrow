@@ -145,3 +145,62 @@ today.js 挂载：`<div id="heatmap-host">` 位于日型切换入口**之后**�
 - 结论：
 - 签核人 / 时间：
 - task-index PASS 执行人：
+
+---
+
+## 9. 返工记录（0015：complete 语义矛盾修复）——2026-09-28
+
+> 触发：Review 方（Hermes GLM-5.3 深审）实测发现 complete 语义矛盾，可被真实数据触发。
+> 本节为返工全记录；§1–§8 为首轮交付原样，未删改。
+
+### 9.1 缺陷与根因
+
+- **缺陷**：streak walk 的 complete 判定用严格等号 `v_rec = v_need`，前端 heatmap.js `cellState` 用 `rec >= den`。某日分母 2、存在 3 条 live planned+actual 行（2 项计划 + 1 条外来多余行）→ 热力图涂「全记录」实底，Core 判 incomplete → streak 断链。**同一天格子是绿的、连续天数却断了**——违反「统计不说谎」红线。
+- **根因**：等号写法自 0013 `mvp_stats` L218 引入，0014 三处继承（`mvp_heatmap_30` L104 格 provisional、`mvp_stats_extend` L182 today_complete / L199 walk）。MVP-001/MVP-004 全部测试均在**干净铺数据**下跑（每天精确 den 条、无外来行场景），缺陷随验收潜伏。
+- **真库触发物**：`p0test:anchor-f1`（biz_date=2026-09-17，planned=true、actual 非空、live）。真库 tracking 起日 2026-09-21，该日当前在起日前（not_started）故未炸；起日回拨或任何补记/导入/数据修复产生的多余 live 行即触发。
+
+探针原始输出（只读 SELECT，2026-09-28）：
+
+```json
+[{"entity_key":"p0test:actor-src","biz_date":"2026-09-17","anchor_type":null,"planned":null,"has_actual":false},
+ {"entity_key":"p0test:anchor-f1","biz_date":"2026-09-17","anchor_type":"wake","planned":"true","has_actual":true,"status":"recorded"},
+ {"entity_key":"p0test:anchor-1","biz_date":"2026-09-17","anchor_type":"wake","planned":"false","has_actual":false}]
+（dow_0917=4：周四——Review 通知误记为周六；ordinary_workday 与 weekend 分母同为 2，结论不受影响）
+```
+
+### 9.2 ARCHITECTURE ALERT：修改已验收 migration 中继承缺陷的裁决（等 Review 签核）
+
+1. **0013 文件本身不动**（不改已应用 migration 铁律）。新增 `supabase/migrations/20260928113000_0015_complete_semantics.sql`，以 `create or replace` 同签名替换 `private.mvp_stats` / `private.mvp_heatmap_30` / `private.mvp_stats_extend` 三个函数体；同签名 replace 保留 ACL，尾部幂等重申 private revoke 保险。应用证据：Management API HTTP 201。
+2. **同款等号 4 处一次修齐**（超出 Review 点名的 2 处 walk，裁决理由如下）：
+   - `mvp_stats` walk（0013 L218，Review 点名）
+   - `mvp_stats_extend` walk（0014 L199，Review 点名）
+   - `mvp_stats_extend` today_complete（0014 L182）——今日多记会被误判未完成，「完成后 +1」文案说谎
+   - `mvp_heatmap_30` 格 provisional（0014 L104）——多记日会被错标「在途」虚线，与实底着色自相矛盾
+   只修 walk 会留下「streak 不断了、格子仍标在途」的半截矛盾；4 处同属一个 complete 语义，统一为 >=。
+3. **语义裁决**：`complete := rec >= den`（多记不罚），与 heatmap.js cellState 对齐（前端不动——它是对的）。`recorded_count` 仍**如实输出原始行数不 cap**（分子可大于分母，如 T01 本轮回归中 recording_rate=1.0145——雷计入分子的真实投影，数据异常不藏）。
+4. **此前未触发的原因**：0013 起所有测试在干净铺数据下运行（每天恰 den 条、entity_key 受控）；真实使用路径（cmd_check_anchor_v1 幂等键 + materialize_day ON CONFLICT）不产生重复行；唯一外来行源是 P0 链铁证 fixture 与未来的补记/导入/数据修复。
+
+### 9.3 回归测试（tests/mvp004-stats-core.sql，追加 T12/T13，T00 改造）
+
+- **T00 改造**：DELETE 排除 `p0test:%`——事务内保留真库雷，T13 在雷真实存在下验证（Review 点名要求）。
+- **T12 超记日**：v_today-5..v_today 全记录 + v_today-3/今日各补 1 条多余行（rec=den+1）→ 断言 streak=6（修前=2 断链）、today_complete=true（修前 false）、两格 provisional=false、recorded=den+1 不 cap。
+- **T13 真库雷排雷**：先断言雷在预期状态（防清雷假绿）→ 铺 09-17 两项计划行 → 格 recorded=3（2 计划+1 雷，证明真踩雷）/ denominator=2 → 单天窗口 walk 穿过 09-17（streak=1；修前等号判死=0）。
+
+复跑结果（原始输出存档 `stats-core-proof.json` 已更新）：
+
+```text
+HTTP 400 MVP004_PROOF — 15/15 全绿：13 条旧 proof（T00–T10）零回归 + T12/T13 新增全过
+T01 recording_rate=1.0144927536231884（雷计入分子如实投影，断言不含 rate 等值，不受影响）
+零残留核验：tracking_started_on=2026-09-21 / mvp004test=0 行 / 雷 live=1（回滚纪律保持）
+```
+
+### 9.4 UI E2E 与 dist
+
+- UI E2E 复跑 **19/19 PASS 零回归**（heatmap.js 未改；真库 tracking 起日 09-21，09-17 格仍 not_started，状态分布不变）。
+- **dist 不重打**（理由）：0015 为纯 DB 层函数替换，UI 交付物（heatmap.js/today.js/css/index.html/package-html.js）零改动；`node scripts/package-html.js --check` 两次 PASS 且 sha256 与首轮一致（`fb2de256…`，release 仍为 `mvp-004-edb0943523b8`），重打只会产生同 hash 空转。
+
+### 9.5 本轮新增待验证（Review 方）
+
+- [ ] §9.2 裁决签核（0013 继承缺陷经 0015 replace 修复 + 4 处全修的范围裁决）
+- [ ] 复跑 tests/mvp004-stats-core.sql：15/15，重点看 T12/T13 断言值（streak=6 / 单天窗口 streak=1 / 雷日 recorded=3）
+- [ ] 确认 recording_rate 可 >1 的语义认可（多记行如实计入分子、不 cap——若产品要求 cap 需另开裁决，当前实现选择不藏数据异常）
