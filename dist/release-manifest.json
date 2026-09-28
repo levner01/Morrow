@@ -1,13 +1,13 @@
 {
   "release": {
-    "id": "mvp-003-951f81309530",
-    "built_at_utc": "2026-09-24T05:51:50.309Z",
+    "id": "mvp-004-edb0943523b8",
+    "built_at_utc": "2026-09-28T06:05:08.813Z",
     "reproducibility_note": "dist/index.html 不含时间戳；同一源输入两次构建 SHA256 必相同。复现校验请排除本字段 built_at_utc。"
   },
   "source_files": [
     {
       "path": "assets/css/app.css",
-      "sha256": "04ef5e1ab62e002916f4e82b7c2451d9930da3662d37527c7a74f2cc8a3c7d2b"
+      "sha256": "bf86b936e8d00e5f84ddeb522fb3b88d969621ed88163ffa88b6a523326715b5"
     },
     {
       "path": "assets/vendor/supabase-js@2.116.0.umd.js",
@@ -34,15 +34,19 @@
       "sha256": "94d26aa7fb3c3055cdd845fdd2760e07e166ff61fe0d6cd581036ae7789935e2"
     },
     {
+      "path": "assets/js/heatmap.js",
+      "sha256": "1cc339c116630574185451d8a12055e8114cb2a6883317aa590d979dbfa3ad5e"
+    },
+    {
       "path": "assets/js/today.js",
-      "sha256": "306831457db565b3d6bff636086468f3c212a302924fcb6870e6e02554bf7b41"
+      "sha256": "25ac2a81f847eccf228ec056e1576f085a8210ee4192f056211d516bcdaf66b0"
     },
     {
       "path": "assets/js/app.js",
       "sha256": "bdbc7cf22096e0658eea9ac59afb39d70d9ac7bcdcfc27cd25ab6911f0c0fb0e"
     }
   ],
-  "source_sha256": "951f81309530c3f14c82b491c6a16ffb73686f333116d666a46264a296878b12",
+  "source_sha256": "edb0943523b875bb0aaa8329879a0a2972e5ec92303af4f09bed8688090412a8",
   "sdk": {
     "name": "@supabase/supabase-js",
     "version": "2.116.0",
@@ -53,7 +57,7 @@
   "entry_source": "index.html",
   "dist": {
     "path": "dist/index.html",
-    "sha256": "624139cf0ebb7469f8ee5c2d63ab991b62db7986b2adf67e1ecfa8a41b8f7406"
+    "sha256": "fb2de2566fa6c36d88c91fa2c51ff05016f720f8642e30fa9b2fe487316e0a42"
   },
   "pages": {
     "url": "https://levner01.github.io/Morrow/",

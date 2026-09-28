@@ -1,0 +1,105 @@
+{
+  "task": "MVP-004",
+  "ran_at_utc": "2026-09-28T06:11:33.980Z",
+  "page": "http://127.0.0.1:8094/dist/index.html",
+  "total": 19,
+  "pass": 19,
+  "fail": 0,
+  "results": [
+    {
+      "id": "core-rpc-ok",
+      "pass": true,
+      "detail": "days=30 2026-08-30..2026-09-28"
+    },
+    {
+      "id": "core-days-30",
+      "pass": true,
+      "detail": "days=30"
+    },
+    {
+      "id": "core-revision-string",
+      "pass": true,
+      "detail": "type=string"
+    },
+    {
+      "id": "core-next-cursor-null",
+      "pass": true,
+      "detail": "next_cursor=null"
+    },
+    {
+      "id": "dom-cells-30",
+      "pass": true,
+      "detail": "cells=30"
+    },
+    {
+      "id": "dom-range-match",
+      "pass": true,
+      "detail": "hm-day-2026-08-30 .. hm-day-2026-09-28"
+    },
+    {
+      "id": "dom-today-marked",
+      "pass": true,
+      "detail": "today=1"
+    },
+    {
+      "id": "dom-all-aria",
+      "pass": true,
+      "detail": "每格均有 aria-label 文字补充"
+    },
+    {
+      "id": "dom-legend-6",
+      "pass": true,
+      "detail": "legend=6"
+    },
+    {
+      "id": "dom-states-present",
+      "pass": true,
+      "detail": "{\"hm-s-notstarted\":22,\"hm-s-empty\":8}"
+    },
+    {
+      "id": "dom-anchor-first",
+      "pass": true,
+      "detail": "三锚点主轴在热力图之上"
+    },
+    {
+      "id": "reconcile-streak",
+      "pass": true,
+      "detail": "DOM=0 RPC=0"
+    },
+    {
+      "id": "reconcile-recording-rate",
+      "pass": true,
+      "detail": "DOM=0% RPC=0%"
+    },
+    {
+      "id": "reconcile-met-rate",
+      "pass": true,
+      "detail": "DOM=0% RPC=0%"
+    },
+    {
+      "id": "rates-separated",
+      "pass": true,
+      "detail": "记录率=0% 达标率=0%（分离显示）"
+    },
+    {
+      "id": "viewport-1280-no-hscroll",
+      "pass": true,
+      "detail": "scrollW=1280"
+    },
+    {
+      "id": "viewport-375-no-hscroll",
+      "pass": true,
+      "detail": "scrollW=375"
+    },
+    {
+      "id": "viewport-375-cells-30",
+      "pass": true,
+      "detail": "cells=30"
+    },
+    {
+      "id": "viewport-320-no-hscroll",
+      "pass": true,
+      "detail": "scrollW=320"
+    }
+  ]
+}

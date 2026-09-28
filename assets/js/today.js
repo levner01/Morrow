@@ -159,10 +159,18 @@
         '<button type="button" id="daytype-change-btn" class="btn-secondary btn-today-secondary">更改今日日型</button>' +
       '</div>'
     );
+
+    // 近 30 天热力图（MVP-004）：次要位置，在三锚点/下一步主轴之下；失败不打扰主区
+    html.push('<div id="heatmap-host"></div>');
     html.push('</div>');
     host.innerHTML = html.join('');
 
     bindToday(ctx);
+
+    // 热力图独立加载（不阻塞今日主区渲染；内部自处理错误与重试）
+    if (Morrow.heatmap && typeof Morrow.heatmap.mount === 'function') {
+      Morrow.heatmap.mount(document.getElementById('heatmap-host'), ctx.biz_date).catch(function () { /* 组件内已兜底 */ });
+    }
   }
 
   function fmtDateHeader(bizDate) {

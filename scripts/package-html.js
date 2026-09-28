@@ -26,6 +26,7 @@ const JS_FILES = [
   'assets/js/drafts.js',
   'assets/js/store.js',
   'assets/js/ui.js',
+  'assets/js/heatmap.js',
   'assets/js/today.js',
   'assets/js/app.js',
 ];
