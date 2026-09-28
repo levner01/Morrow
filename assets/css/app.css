@@ -387,6 +387,17 @@ html.morrow-booted #boot-fallback { display: none; }
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+/* 图例色块基础形状：必须在状态类（.hm-s-*）之前声明——border 简写同优先级后声明者胜，
+   若放在状态类之后会把「未开始」的 dashed、「记全·有未达标」的 2px 暖描边覆盖成 1px 灰实线
+   （Hy4 视觉复核 2026-09-28 发现，图例须与真实格子色态一一对应） */
+.hm-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  flex: none;
+}
+/* 状态类：图例色块与网格格子共用（.hm-swatch.hm-s-xx）；声明顺序在 .hm-swatch 之后 */
 .hm-s-notstarted { border-style: dashed; background: transparent; opacity: 0.65; }
 .hm-s-empty { background: var(--hm-gray); }
 .hm-s-partial { background: linear-gradient(135deg, var(--hm-warm) 0 50%, var(--hm-gray) 50% 100%); }
@@ -406,11 +417,4 @@ html.morrow-booted #boot-fallback { display: none; }
   color: var(--muted);
 }
 .hm-legend li { display: flex; align-items: center; gap: 6px; }
-.hm-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-  border: 1px solid var(--line);
-  flex: none;
-}
 .hm-swatch-today { outline: 2px solid var(--accent); outline-offset: 1px; background: transparent; }

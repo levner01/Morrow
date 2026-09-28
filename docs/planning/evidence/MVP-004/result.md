@@ -135,16 +135,23 @@ today.js 挂载：`<div id="heatmap-host">` 位于日型切换入口**之后**�
 
 ## 8. 待验证（Review 方）
 
-- [ ] 复跑 `tests/mvp004-stats-core.sql`（Management API，proof 应与 §3 一致；T08 动态断言任意时刻可跑）
-- [ ] 复跑 `tests/mvp004-heatmap-ui.js`（keychain 三凭据 + SUPABASE_URL 注入；需非沙盒/本机 Chrome）
-- [ ] 视觉复核：heatmap-1280/375/320.png 五态与图例、色弱可读、热力图不抢三锚点注意力
+- [ ] ~~复跑 `tests/mvp004-stats-core.sql`（Management API，proof 应与 §3 一致；T08 动态断言任意时刻可跑）~~ ✅ 已由深审复跑（13/13 一致；返工后 15/15 一致）
+- [ ] ~~复跑 `tests/mvp004-heatmap-ui.js`（keychain 三凭据 + SUPABASE_URL 注入；需非沙盒/本机 Chrome）~~ ✅ 已由深审复跑（19/19）
+- [ ] ~~视觉复核：heatmap-1280/375/320.png 五态与图例、色弱可读、热力图不抢三锚点注意力~~ ✅ Hy4 已复核（第 1/2 项发现图例 CSS 覆盖缺陷，已修复并像素级验证 6/6）
+- [ ] **NEW-FINDING-1（P2，WorkBuddy 反例初审）**：`tracking_started_on` 与 `schedule_history[].effective_from` 双事实源耦合——分歧时 streak walk 静默提前退出（统计口径偏短）。M1 不可达（0008 初始化同源写入）。**DoD 硬项挂靠**：未来任何「改日型计划 / 改起日」类命令落地时，必须保证 `schedule_history` 至少一段 `effective_from <= tracking_started_on`，或统一 walk 下界判据为计划存在性
+- [ ] **全态实拍佐证（Hy4 附带发现）**：本轮真实数据仅覆盖 6 态中的 3 态（虚格/灰/今日蓝框），「部分记录 / 记全·有未达标 / 全记录且达标」的格内表现无实拍——随 7 天真实使用期数据覆盖后补录，或安排含全态 fixture 的验证截图
 - [ ] 真实使用观察：今日完成三锚点打卡后 streak/记录率跳动是否符合直觉（建议纳入 7 天真实使用）
 
 ## Review 签核区（留空，归 Review 方）
 
-- 结论：
-- 签核人 / 时间：
-- task-index PASS 执行人：
+- 结论：**PASS**（2026-09-28，Hermes GLM-5.3 深审 + WorkBuddy DeepSeek V4.1 Flash 反例初审 + Hy4 视觉复核）
+- 深审：0014 真库应用/grants/15 项 SQL proof 复跑逐条一致；HTTP 全链路（supabase-js 同款 envelope）200；独立探针完成 complete 语义矩阵（超记穿过/部分记录断链/恰好相等 complete）+ DB 零污染核验；发现 complete 语义矛盾（streak 等号 vs heatmap `>=`）→ 返工 0015。
+- 返工深审：0015 REPLACE 零漂移（diff 恰 4 处 `=`→`>=`）；15/15 proof 复跑一致；context 链路形状不变（红线 3）；grants 终态复核；探针零残留。
+- WorkBuddy 反例初审（workbuddy-counterexample-review.md）：**PASS**——独立零漂移复核 + 部署体 vs 文件体 body-only diff_ops=0（补齐深审盲区）+ W1–W10 自构造实测全绿 + W7 反事实双向对照（旧语义=0/新语义=1/部署=1）；NEW-FINDING-1（P2 非阻断：`tracking_started_on` 与 `effective_from` 双事实源耦合，0008 同源写入 M1 不可达）→ 记入 §8 待验证，随未来「改计划/改起日」命令处理。
+- Hy4 视觉复核：第 1/2 项 FAIL（图例色块被 `.hm-swatch` border 简写覆盖：未开始失 dashed、记全·有未达标失 2px 暖描边）——根因已修（app.css 声明顺序调整，`.hm-swatch` 移至状态类之前），像素级验证 6/6 PASS + 截图 `heatmap-legend-fix-1280.png` 存证（release mvp-004-a2c07ceb99e2）；第 3/4/5 项 PASS（不抢主区/无横滚/色弱可读）。附带发现「本轮真实数据仅覆盖 3/6 态，格内区分度无实拍佐证」→ 记录 §8 待验证，随真实使用补。
+- 语义裁决签核：complete := rec >= den（多记不罚）；recorded_count 如实不 cap（recording_rate 可 >1，数据异常不藏）。4 处全修的范围裁决认可（只修 walk 会留半截矛盾）。
+- 签核人 / 时间：Hermes GLM-5.3 · 2026-09-28 17:20 CST
+- task-index PASS 执行人：Hermes GLM-5.3（MVP-004 → PASS，next_task → MVP-005）
 
 ---
 

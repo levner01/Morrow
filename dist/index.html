@@ -7,7 +7,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Morrow · 登录</title>
 <meta name="description" content="Morrow 单用户生活工作台 — Phase 0 登录壳（P0-006）">
-<!-- Morrow 发行 mvp-004-edb0943523b8 · 源 SHA256 edb0943523b875bb0aaa8329879a0a2972e5ec92303af4f09bed8688090412a8 · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
+<!-- Morrow 发行 mvp-004-a2c07ceb99e2 · 源 SHA256 a2c07ceb99e2fd79e1ccec454cc460df43232c381244b75799e0e191947b0496 · 由 scripts/package-html.mjs 生成，禁止手改 dist -->
 <style>
 /* ---- assets/css/app.css ---- */
 /* Morrow 登录壳样式（P0-006）：原生 CSS Grid，系统字体栈，零远程字体。
@@ -399,6 +399,17 @@ html.morrow-booted #boot-fallback { display: none; }
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+/* 图例色块基础形状：必须在状态类（.hm-s-*）之前声明——border 简写同优先级后声明者胜，
+   若放在状态类之后会把「未开始」的 dashed、「记全·有未达标」的 2px 暖描边覆盖成 1px 灰实线
+   （Hy4 视觉复核 2026-09-28 发现，图例须与真实格子色态一一对应） */
+.hm-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  flex: none;
+}
+/* 状态类：图例色块与网格格子共用（.hm-swatch.hm-s-xx）；声明顺序在 .hm-swatch 之后 */
 .hm-s-notstarted { border-style: dashed; background: transparent; opacity: 0.65; }
 .hm-s-empty { background: var(--hm-gray); }
 .hm-s-partial { background: linear-gradient(135deg, var(--hm-warm) 0 50%, var(--hm-gray) 50% 100%); }
@@ -418,13 +429,6 @@ html.morrow-booted #boot-fallback { display: none; }
   color: var(--muted);
 }
 .hm-legend li { display: flex; align-items: center; gap: 6px; }
-.hm-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-  border: 1px solid var(--line);
-  flex: none;
-}
 .hm-swatch-today { outline: 2px solid var(--accent); outline-offset: 1px; background: transparent; }
 
 </style>
@@ -472,7 +476,7 @@ html.morrow-booted #boot-fallback { display: none; }
 
 
 <script>
-window.MORROW_RELEASE={"id":"mvp-004-edb0943523b8","source_sha256":"edb0943523b875bb0aaa8329879a0a2972e5ec92303af4f09bed8688090412a8","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
+window.MORROW_RELEASE={"id":"mvp-004-a2c07ceb99e2","source_sha256":"a2c07ceb99e2fd79e1ccec454cc460df43232c381244b75799e0e191947b0496","sdk":{"name":"@supabase/supabase-js","version":"2.116.0"}};
 </script>
 <script>
 /* ---- assets/vendor/supabase-js@2.116.0.umd.js ---- */

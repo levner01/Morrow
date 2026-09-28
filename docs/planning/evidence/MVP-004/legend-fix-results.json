@@ -1,0 +1,35 @@
+{
+  "results": [
+    {
+      "id": "legend-rendered",
+      "pass": true,
+      "detail": "图例已渲染"
+    },
+    {
+      "id": "legend-6-items",
+      "pass": true,
+      "detail": "6 项图例"
+    },
+    {
+      "id": "legend-notstarted-dashed",
+      "pass": true,
+      "detail": "borderStyle=dashed"
+    },
+    {
+      "id": "legend-fullunmet-warm-border",
+      "pass": true,
+      "detail": "borderWidth=2px borderColor=rgb(217, 123, 43)"
+    },
+    {
+      "id": "legend-fullmet-warm",
+      "pass": true,
+      "detail": "borderColor=rgb(217, 123, 43) bg=rgb(217, 123, 43)"
+    },
+    {
+      "id": "screenshot-saved",
+      "pass": true,
+      "detail": "heatmap-legend-fix-1280.png"
+    }
+  ],
+  "timestamp": "2026-09-28T09:15:30.239Z"
+}
