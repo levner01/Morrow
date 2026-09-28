@@ -209,3 +209,20 @@ $ node tests/mvp002-booted-regression.js
 1. **MVP-003 实现 PASS**。task-index MVP-003 → PASS，next_task → MVP-004。
 2. 移交项（不阻断）：①场景 2 测试脚本流程勘误（10 行内，执行方顺手）②**跨设备双浏览器实测 NOT_RUN**——收据声明步骤但未留原始输出；改判 NOT_RUN 如实标注；**Gate-M1（7 天真实使用）期间 must 补录真实双机原始证据**（RPC 层 LWW/revision P0-004/005 已独立实测，不重复）。
 3. 质量记录：两次返工（脚本没跑就报完成 / store.js 漏挂加载链）——**第 2 次返工是结构缺陷**（新文件未挂三处），教训已写入 result.md "过程发现"；add "新增 JS 文件三处同步" 为后续 MVP-005/006 施工强制清单项。
+
+## 移交项①收口：场景 2 测试脚本勘误（2026-09-28，Hermes GLM-5.3 Flash）
+
+Review 留下的勘误处方执行完毕，附本轮实测新发现的两处测试基建缺陷一并修复：
+
+**改动（tests/mvp003-fault-injection.js）**：
+1. **场景 2 流程重排**（Review 处方）：断网 → add（offline 窗口内绝不 reload）→ 恢复网络 → reload → 轮询 `getCurrentUser()` 非空（≤20s，走真实 verifyOwner RPC）→ 断言草稿恢复。**等待信号用 getCurrentUser 而非 morrow-booted class**——后者在 verifyOwner 之前就打上，作会话恢复信号太早（假就绪）。
+2. **断言精确化**：草稿断言匹配本次运行写入的唯一 note（`E2E 测试草稿 … run=mvp003-e2e-*`），防 headless Chrome profile 复用导致历史残留假 PASS。
+3. **CDP `returnByValue: true` 补齐**（本轮新发现）：`Runtime.evaluate` 返回对象/数组时必须带 `returnByValue`，否则 `.result.value` 恒 undefined。同一病根修了 4 处：场景 2 add/恢复断言、setupAndLogin 登录结果、场景 4 `_read()`。**场景 4 的隔离断言此前一直在空转**（undefined → `|| []` → 空数组 → 断言恒真），属 P0-006「runner 假 PASS」教训同款。
+4. **登录失败硬失败**：setupAndLogin 检查 login.ok，失败即 throw（不再带着 null user 走出串假象）。
+5. **`--no-proxy-server`**（本轮新发现，环境类根因）：测试 Chrome 不吃系统代理。2026-09-28 实测：系统代理指 127.0.0.1:10808 但代理客户端未运行（无监听），Chrome 走死代理 → supabase 全挂 → badge「同步失败·重试」→ 登录不落、草稿落 anonymous 域。curl 直连同刻 200，证明网络正常、纯代理配置问题。**此前 E2E 隐式依赖宿主机代理状态，9-24 全绿有幸运成分**；修复后对宿主代理状态免疫。
+
+**实测**：连续两轮 `node tests/mvp003-fault-injection.js` **7/7 ALL PASS**（EXIT=0，合成日期 2026-09-29，device `mvp003-e2e-*`）。场景 2 key 恢复为 owner 域 `morrow.drafts.v1.0c645909-…`（9-24 原始证据同域），场景 4 Owner A key 同为真 owner 域——两轮复跑期间出现的 anonymous 域假象（代理死致登录失败）已被根除。
+
+**DB 零污染核验**（Management API SQL 直查，2026-09-28）：`life_data` 今日/明日（合成测试日）零行新增，最新真实行停在 2026-09-23（owner 真实使用）；`activity_log` 近 24h 仅 1 条 `health.keepalive`。E2E 全程 localStorage，未触 DB。
+
+**遗留移交**（不变）：跨设备双机原始证据补录 → Gate-M1 期间 must（只凯哥能采）。

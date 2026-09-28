@@ -4,7 +4,8 @@
  *
  * 验收五条（逐条实测证据）：
  * 1. 同步文案仅三态；旧快照/草稿不冒充"已同步"
- * 2. 断网→输入→确认草稿写盘→刷新→恢复；storage 拒绝不谎报安全保存
+ * 2. 断网→输入→确认草稿写盘→恢复网络→刷新→草稿恢复（reload 必须在恢复网络后：
+ *    offline 会连 127.0.0.1 本地服务一起断，断网中 reload 必得 error page）；storage 拒绝不谎报安全保存
  * 3. A 成功但 response 丢、B 再写、A 同 key 重试 → 只返原收据
  * 4. 不同锚点无覆盖；同锚点新意图按 DB 提交 LWW
  * 5. 旧慢读不盖新写；刷新不覆盖未提交表单；跨 owner 不泄露草稿；online 事件不自动写
@@ -95,6 +96,9 @@ async function launchChrome(url) {
     '--no-sandbox',
     '--disable-dev-shm-usage',
     '--window-size=1280,900',
+    // E2E 不依赖宿主机系统代理状态：系统代理开但代理客户端未运行时，
+    // Chrome 走系统代理会导致 supabase.co 请求全部失败（2026-09-28 实测复现）。
+    '--no-proxy-server',
     url,
   ]);
 
@@ -171,11 +175,16 @@ async function setupAndLogin(cdp) {
       })()
     `,
     awaitPromise: true,
+    returnByValue: true,
   });
 
   await new Promise((res) => setTimeout(res, 1000));
 
-  return loginResult.result.value;
+  const login = loginResult.result.value;
+  if (!login || login.ok !== true) {
+    throw new Error('setupAndLogin 登录失败: ' + JSON.stringify(login && login.error ? login.error : login).slice(0, 200));
+  }
+  return login;
 }
 
 // 场景 1：同步文案仅三态
@@ -216,10 +225,11 @@ async function testSyncLabelsThreeStates() {
   }
 }
 
-// 场景 2：断网→输入→确认草稿写盘→刷新→恢复
+// 场景 2：断网→输入→确认草稿写盘→恢复网络→刷新→草稿恢复
 async function testOfflineDraftRecovery() {
-  console.log('\n[场景 2] 断网→输入→确认草稿写盘→刷新→恢复');
+  console.log('\n[场景 2] 断网→输入→确认草稿写盘→恢复网络→刷新→草稿恢复');
   let chrome, cdp;
+  const draftNote = 'E2E 测试草稿 ' + new Date().toISOString() + ' run=' + TEST_DEVICE_ID;
   try {
     const launched = await launchChrome(`${HTTP_BASE}/index.html`);
     chrome = launched.chrome;
@@ -235,11 +245,11 @@ async function testOfflineDraftRecovery() {
       uploadThroughput: 0,
     });
 
-    // 输入 note（触发草稿保存）
+    // 输入 note（触发草稿保存）——此窗口内绝不 reload（offline 会连本地服务一起断）
     const draftSaved = await cdp.send('Runtime.evaluate', {
       expression: `
         (function() {
-          const testNote = 'E2E 测试草稿 ' + new Date().toISOString();
+          const testNote = ${JSON.stringify(draftNote)};
           const recordKey = window.Morrow.store.getCommandKey('${TEST_BIZ_DATE}', 'wake');
           window.Morrow.store.setFormDraft('${TEST_BIZ_DATE}', 'wake', 'note', testNote, true);
 
@@ -250,16 +260,13 @@ async function testOfflineDraftRecovery() {
             biz_date: '${TEST_BIZ_DATE}',
             type: 'note'
           });
-          return result.ok === true;
+          return { ok: result.ok === true, note: testNote };
         })()
       `,
+      returnByValue: true,
     });
 
-    // 刷新页面
-    await cdp.send('Page.reload');
-    await new Promise((res) => setTimeout(res, 3000));
-
-    // 恢复网络
+    // 恢复网络（先于 reload：offline 中的 reload 连 127.0.0.1 本地服务一起断，必得 error page）
     await cdp.send('Network.emulateNetworkConditions', {
       offline: false,
       latency: 0,
@@ -267,17 +274,47 @@ async function testOfflineDraftRecovery() {
       uploadThroughput: -1,
     });
 
-    // 检查草稿是否恢复
+    // 恢复网络后刷新页面
+    await cdp.send('Page.reload');
+    // 等待 boot 完成：getCurrentUser() 非 null（auth_check + verifyOwner 走真实 RPC，最多 20s）
+    // 注意 morrow-booted class 在 verifyOwner 之前就加上，不能作为会话恢复完成的信号
+    let sessionReady = false;
+    for (let i = 0; i < 40; i++) {
+      await new Promise((res) => setTimeout(res, 500));
+      const u = await cdp.send('Runtime.evaluate', {
+        expression: `!!(window.Morrow && Morrow.app && Morrow.app.getCurrentUser && Morrow.app.getCurrentUser())`,
+      });
+      if (u.result.value === true) { sessionReady = true; break; }
+    }
+
+    // 检查草稿是否恢复：断言精确到本次写入的 note（防历史残留假 PASS）
     const draftRecovered = await cdp.send('Runtime.evaluate', {
       expression: `
         (function() {
-          const drafts = window.Morrow.drafts._read();
-          return drafts && drafts.length > 0 && drafts[0].input && drafts[0].input.note ? true : false;
+          const wanted = ${JSON.stringify(draftNote)};
+          const drafts = window.Morrow.drafts._read() || [];
+          const hit = drafts.some(function (d) {
+            return d && d.input && d.input.note === wanted;
+          });
+          return { hit: hit, count: drafts.length, key: window.Morrow.drafts._getKey() };
         })()
       `,
+      returnByValue: true,
     });
 
-    record('offline-draft-recovery', draftRecovered.result.value === true, '断网草稿恢复成功');
+    const rec = draftRecovered.result.value || {};
+    const ok = draftSaved.result.value && draftSaved.result.value.ok === true
+      && sessionReady === true
+      && rec.hit === true;
+    record(
+      'offline-draft-recovery',
+      ok === true,
+      '断网草稿恢复（note 精确匹配）: add=' + (draftSaved.result.value && draftSaved.result.value.ok)
+        + ' sessionReady=' + sessionReady
+        + ' hit=' + rec.hit
+        + ' count=' + rec.count
+        + ' key=' + String(rec.key).slice(0, 60)
+    );
   } catch (err) {
     record('offline-draft-recovery', false, '测试异常：' + err.message);
   } finally {
@@ -426,6 +463,7 @@ async function testCrossOwnerIsolation() {
           return drafts || [];
         })()
       `,
+      returnByValue: true,
     });
 
     const draftsList = ownerBDrafts.result.value || [];

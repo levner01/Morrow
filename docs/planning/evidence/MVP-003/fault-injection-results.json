@@ -7,8 +7,8 @@
     },
     {
       "id": "offline-draft-recovery",
-      "pass": false,
-      "detail": "断网草稿恢复成功"
+      "pass": true,
+      "detail": "断网草稿恢复（note 精确匹配）: add=true sessionReady=true hit=true count=1 key=morrow.drafts.v1.0c645909-ebb5-4910-ab99-4f7b238c9529.web-a9"
     },
     {
       "id": "stale-read-not-accepted",
@@ -23,7 +23,7 @@
     {
       "id": "cross-owner-key-isolation",
       "pass": true,
-      "detail": "Owner A key: morrow.drafts.v1.0c645909-ebb5-4910-ab99-4f7b238c9529.web-7d6a1c7e-dab3-4b33-9bd9-233e38f1644c, Owner B key: morrow.drafts.v1.owner-b-uuid.web-7d6a1c7e-dab3-4b33-9bd9-233e38f1644c"
+      "detail": "Owner A key: morrow.drafts.v1.0c645909-ebb5-4910-ab99-4f7b238c9529.web-b2f60ce5-9d5a-4b10-9c74-47fc22971cf5, Owner B key: morrow.drafts.v1.owner-b-uuid.web-b2f60ce5-9d5a-4b10-9c74-47fc22971cf5"
     },
     {
       "id": "cross-owner-draft-isolation",
@@ -51,9 +51,18 @@
     "[object Object]",
     "[object Object]",
     "[object Object]",
+    "[object Object]",
+    "[object Object]",
+    "[object Object]",
+    "[object Object]",
+    "[object Object]",
+    "[object Object]",
+    "[object Object]",
+    "[object Object]",
+    "[object Object]",
     "[object Object]"
   ],
-  "test_biz_date": "2026-09-25",
-  "test_device_id": "mvp003-e2e-8j0iklxi",
-  "timestamp": "2026-09-24T06:12:58.415Z"
+  "test_biz_date": "2026-09-29",
+  "test_device_id": "mvp003-e2e-rbuq42ze",
+  "timestamp": "2026-09-28T04:15:43.883Z"
 }
