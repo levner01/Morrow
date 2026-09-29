@@ -163,9 +163,9 @@ REPRODUCIBLE: PASS（第二次 --check）
   - UI E2E 复跑：41/41 逐条 PASS（revision=464、activity_log=194、多页游标 104 个——数据随真实工作区浮动，结构断言全过；T3 counts/sha 与整页全等、T4 篡改值未入包、T5 断网零下载）
   - **深审独立对抗探针（63 项，超出施工测试覆盖）**：UTF-16 键序混排（\u00A0/\u2028/€/😀/דּ）、JCS 数字序列化边界（1e21/5e-324/最小 subnormal/-0→"0"/NaN·Infinity 拒绝）、parseLossless 严格性（01/1./1.e3/+1/.5/悬空 e/--1/截断输入 12 类全拒）、lone surrogate round-trip（\ud800/\udfff 独立保真）、scanValue 大写绕过（TOKEN/secret_data/session_id/tokenized 全命中、数字布尔 null 不误伤）、错误路径（settings 空行/state 0 行/revision 非法/401 不重试/网络错误恰 3 次尝试）
 - 深审（Hermes + DeepSeek V4 Pro）：**PASS（Hermes 已签）**；收据与实测零偏差，未发现 P0/P1/P2
-- 安全复核（WorkBuddy + Kimi K3）：待复核（提示词已交付）
-- 签核人 / 时间：Hermes（GLM-5.3）2026-09-29 09:4x CST；task-index 待 WorkBuddy 复核后翻牌
-- task-index PASS 执行人：（待翻牌时填写）
+- 安全复核（WorkBuddy + Kimi K3）：**PASS（2026-09-29）**——三线全绿（线 A 无凭据红线 16 变体 + anon 补刀 42501 + 全列对账；线 B 快照语义最小矩阵独立对账 audit_rows×2 闭合；线 C 前端审读含 10 万层嵌套压测），三条 P3 注记（F1 JWT 正则边界 / F2 递归深度 / F3 测试钩子暴露）不阻塞；Hermes 终核对账：A1f anon 42501 复现 = true、`wb-s05:%` 零残留、revision=464 与签核时一致——报告见 `workbuddy-security-review.md`
+- 签核人 / 时间：Hermes（GLM-5.3）2026-09-29 09:4x CST；WorkBuddy（Kimi K3）2026-09-29；**三方签核闭环，task-index 已翻牌**
+- task-index PASS 执行人：Hermes（GLM-5.3）——MVP-005 → PASS、next_task → MVP-006（随本 commit 入库）
 
 ---
 

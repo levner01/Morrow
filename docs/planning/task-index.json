@@ -2,7 +2,7 @@
  "planning_version": "1.1",
  "milestone": "M1 = Phase 0 + MVP + 7 days real use",
  "implementation_status": "NOT_STARTED",
- "next_task": "MVP-005",
+ "next_task": "MVP-006",
  "phase1_gate": "LOCKED: 14 days + 80% + owner confirmation",
  "tasks": [
   {
@@ -212,7 +212,7 @@
    "id": "MVP-005",
    "title": "交付一致、全量、无凭据的JSON导出",
    "phase": "MVP",
-   "status": "PLANNED",
+   "status": "PASS",
    "dependencies": [
     "MVP-004"
    ],
