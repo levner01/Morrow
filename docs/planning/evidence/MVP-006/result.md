@@ -37,9 +37,34 @@ $ gh api repos/levner01/Morrow/pages --jq '{status, html_url, source, build_type
 - Pages **已启用**（workflow 模式，`.github/workflows/deploy-pages.yml`：push main 触碰 `dist/**` → upload-pages-artifact path:dist → deploy-pages）——无需凯哥设置动作。
 - 线上内容指纹（实测时点）：`6a23e56c…`（= mvp-005 发行，与远端 main 的 dist 一致）；本地重打后 `58d89c5f…`（mvp-006）。**push 后 workflow 自动部署新版。**
 
-### 2.3 发版对账（push 后补记）
+### 2.3 发版对账（push 后实测补记）
 
-> 本小节在 commit+push 触发 workflow 部署后补记：线上 `curl | shasum -a 256` = `58d89c5f…de7c` 对账 + 页面 boot 后 console `MORROW_RELEASE.id` = `mvp-006-4624e4dc3237` 对账 + A13 fallback 重测结果。**补记前此处为 PENDING，不假装完成。**
+commit `de7605f` push（proxy 10808）→ Pages workflow run `36520918941` **completed success（22s）** → 部署后对账：
+
+```bash
+$ curl -s https://levner01.github.io/Morrow/ | shasum -a 256
+58d89c5f142208a723aea0b9a249972a276d028f6a96ea6cbf33cae2a025de7c  -   # = 本地 dist，对账 PASS
+$ curl -sI https://levner01.github.io/Morrow/ | grep -iE "^HTTP|last-modified"
+HTTP/2 200 / last-modified: Tue, 29 Sep 2026 04:16:59 GMT
+```
+
+线上 CDP 探针（2026-09-29，只读）：
+
+```json
+{
+  "page": "https://levner01.github.io/Morrow/",
+  "checks": {
+    "release_id": "mvp-006-4624e4dc3237",
+    "auth_login": { "ok": true, "err": null },
+    "rpc": { "ok": true, "revision": "480" },
+    "a13_offline": { "shellVisible": true, "ok": false, "errorKind": "network", "errorText": "无法连接到服务器，请检查网络后重试", "retryable": true },
+    "a13_offline_recovered": { "ok": true },
+    "a13_bad_url": { "shellVisible": true, "errorKind": "network", "recovered": true }
+  }
+}
+```
+
+**对账结论**：线上服务 hash = 本地 dist = `58d89c5f…de7c`；console `MORROW_RELEASE.id` = `mvp-006-4624e4dc3237`（发行自报一致）；线上 Auth/RPC 真实走通（revision=480）。A13 见 §3。
 
 ### 2.4 本地 HTML 交付说明（同 hash 手动安装）
 
@@ -139,9 +164,14 @@ $ git log --oneline --all | grep -i "phase1\|phase-1"
 （零命中）
 ```
 
-### A13 fallback（Supabase 失败不白屏）
+### A13 fallback（Supabase 失败不白屏）— 发版后线上重测 PASS
 
-发版后重测（§2.3 联动，push 后补记：改错 URL / 禁网 → 壳可见可恢复）。**补记前 PENDING。**
+对发版后的 Pages（§2.3，CDP `Network.enable` + `emulateNetworkConditions`，真实线上页）：
+
+- **禁网**：壳可见（shellVisible=true，非白屏）；verifyOwner 返回有限错误集 `{kind: network, text: 无法连接到服务器，请检查网络后重试, retryable: true}`；恢复网络后同一调用 `ok: true` —— 可恢复
+- **改错 URL**（bad-project-00000.supabase.co）：壳可见；errorKind=network（不泄内部细节）；改回正确 URL 后 `recovered: true`
+
+（P0-006/P0-008 曾证同款路径；本段为 mvp-006 发行版复证。注：探针首跑漏 `Network.enable` 致 offline 模拟未生效——已修正并重测，教训随记。）
 
 ## 4. mvp003 复跑竞态：根因与测试基建修复（工程记录）
 
@@ -181,7 +211,6 @@ $ git log --oneline --all | grep -i "phase1\|phase-1"
 | A26 连续 7 天真实使用 | **PENDING（段二验收项）** | 本段状态为 ENGINEERING_READY 的直接原因；窗口未开始，无任何冒充记录 |
 | A27 完整 7 天窗 | 工程侧现状达标（4/7 天 ≥3） | 每日调度配置证据 + 完整窗随段二 |
 | health 逐次时间戳明细 | 可选自查（Review 方 PAT 只读） | §5 |
-| §2.3 发版对账 + A13 重测 | PENDING（本段 push 后立即补记） | 见 §2.3 |
 
 ## 7. 凭据与安全纪律
 

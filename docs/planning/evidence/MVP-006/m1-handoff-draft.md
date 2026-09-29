@@ -24,7 +24,7 @@ A01–A28状态与证据链接：
   A26 PENDING（段二，7 天真实使用窗未开始，无冒充记录）
   A27 工程侧现状达标：最近 7 天 health 成功 4 次 ≥3（req_id 前 8 位 9d45127d/b03f1858/dea98d29/f52fd876）；完整窗 + 每日调度配置随段二
   A28 PASS：grep phase1 仅 0002 L28 注释一行（非代码）；git log 零 Phase1 commit（result.md §3）
-  A13 发版后重测 PENDING（result.md §2.3 联动补记）
+  A13 PASS（发版后线上重测：禁网/错 URL 壳可见可恢复，result.md §3 A13 + §2.3 探针原始输出）
 公司机/家机/实际手机证据：
   公司机 2026-09-29 填实（M4 Max / macOS 26.3.1 / Chrome 154.0.8037.58，双机表）
   家机/实际手机 BLOCKED-OWNER（dual-device-evidence.md 回传区已留位）
