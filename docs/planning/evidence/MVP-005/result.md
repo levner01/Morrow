@@ -154,13 +154,18 @@ REPRODUCIBLE: PASS（第二次 --check）
 - [ ] 视觉复核：export-1280/375/320.png（按钮次要位置、状态行三态着色、无横滚）
 - [ ] sample-export.json 格式与 C-08 合同逐字段核对
 
-## Review 签核区（留空，归 Review 方）
+## Review 签核区（归 Review 方）
 
-- 结论：
-- 深审（Hermes + DeepSeek V4 Pro）：
-- 安全复核（WorkBuddy + Kimi K3）：
-- 签核人 / 时间：
-- task-index PASS 执行人：
+- 结论：**深审 PASS（Hermes，2026-09-29）**——不采信收据文字，全部独立复跑：
+  - SQL proof 复跑：HTTP 400 + MVP005_PROOF，9/9 与存档逐值一致（delta=12004/audit_rows=1002/keyset 500+500 distinct=1000/BIGINT 双保真/state_revision_text=12468 动态值符合/白名单 42703/封闭 42501×2/RLS 0 行）
+  - **真库零残留自查（深审新增探针）**：`mvp005test:%` fixture=0、p0test:anchor-f1 仍 live（1）、activity_log 末行为今晨系统行——回滚纪律成立，雷未被动过
+  - pipeline 复跑：51/51 逐条 PASS
+  - UI E2E 复跑：41/41 逐条 PASS（revision=464、activity_log=194、多页游标 104 个——数据随真实工作区浮动，结构断言全过；T3 counts/sha 与整页全等、T4 篡改值未入包、T5 断网零下载）
+  - **深审独立对抗探针（63 项，超出施工测试覆盖）**：UTF-16 键序混排（\u00A0/\u2028/€/😀/דּ）、JCS 数字序列化边界（1e21/5e-324/最小 subnormal/-0→"0"/NaN·Infinity 拒绝）、parseLossless 严格性（01/1./1.e3/+1/.5/悬空 e/--1/截断输入 12 类全拒）、lone surrogate round-trip（\ud800/\udfff 独立保真）、scanValue 大写绕过（TOKEN/secret_data/session_id/tokenized 全命中、数字布尔 null 不误伤）、错误路径（settings 空行/state 0 行/revision 非法/401 不重试/网络错误恰 3 次尝试）
+- 深审（Hermes + DeepSeek V4 Pro）：**PASS（Hermes 已签）**；收据与实测零偏差，未发现 P0/P1/P2
+- 安全复核（WorkBuddy + Kimi K3）：待复核（提示词已交付）
+- 签核人 / 时间：Hermes（GLM-5.3）2026-09-29 09:4x CST；task-index 待 WorkBuddy 复核后翻牌
+- task-index PASS 执行人：（待翻牌时填写）
 
 ---
 
