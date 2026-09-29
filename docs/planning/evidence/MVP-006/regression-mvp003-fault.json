@@ -1,0 +1,85 @@
+{
+  "results": [
+    {
+      "id": "sync-labels-three-states",
+      "pass": true,
+      "detail": "同步标签：同步失败·重试"
+    },
+    {
+      "id": "offline-draft-recovery",
+      "pass": true,
+      "detail": "断网草稿恢复（note 精确匹配）: add=true sessionReady=true hit=true count=1 key=morrow.drafts.v1.0c645909-ebb5-4910-ab99-4f7b238c9529.web-16"
+    },
+    {
+      "id": "stale-read-not-accepted",
+      "pass": true,
+      "detail": "旧慢读（v3）不覆盖新写（v5）：false"
+    },
+    {
+      "id": "new-read-accepted",
+      "pass": true,
+      "detail": "新慢读（v7）覆盖旧写（v5）：true"
+    },
+    {
+      "id": "cross-owner-key-isolation",
+      "pass": true,
+      "detail": "Owner A key: morrow.drafts.v1.0c645909-ebb5-4910-ab99-4f7b238c9529.web-643b5b9e-8088-45c6-a1a4-07188f7bd2f8, Owner B key: morrow.drafts.v1.owner-b-uuid.web-643b5b9e-8088-45c6-a1a4-07188f7bd2f8"
+    },
+    {
+      "id": "cross-owner-draft-isolation",
+      "pass": true,
+      "detail": "Owner B 读不到 Owner A 的草稿"
+    },
+    {
+      "id": "online-event-no-auto-write",
+      "pass": true,
+      "detail": "online 事件触发后不自动写"
+    }
+  ],
+  "network": [
+    "http://127.0.0.1:8080/favicon.ico GET",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password POST",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password OPTIONS",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password POST",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password OPTIONS",
+    "http://127.0.0.1:8080/index.html GET",
+    "http://127.0.0.1:8080/assets/css/app.css GET",
+    "http://127.0.0.1:8080/assets/vendor/supabase-js@2.116.0.umd.js GET",
+    "http://127.0.0.1:8080/assets/js/config.js GET",
+    "http://127.0.0.1:8080/assets/js/transport.js GET",
+    "http://127.0.0.1:8080/assets/js/drafts.js GET",
+    "http://127.0.0.1:8080/assets/js/store.js GET",
+    "http://127.0.0.1:8080/assets/js/ui.js GET",
+    "http://127.0.0.1:8080/assets/js/heatmap.js GET",
+    "http://127.0.0.1:8080/assets/js/export.js GET",
+    "http://127.0.0.1:8080/assets/js/today.js GET",
+    "http://127.0.0.1:8080/assets/js/app.js GET",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/get_workspace_revision_v1 POST",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/get_workspace_revision_v1 OPTIONS",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/get_today_context_v1 POST",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/rest/v1/rpc/get_today_context_v1 OPTIONS",
+    "http://127.0.0.1:8080/favicon.ico GET",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password POST",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password OPTIONS",
+    "http://127.0.0.1:8080/assets/css/app.css GET",
+    "http://127.0.0.1:8080/assets/vendor/supabase-js@2.116.0.umd.js GET",
+    "http://127.0.0.1:8080/assets/js/config.js GET",
+    "http://127.0.0.1:8080/assets/js/transport.js GET",
+    "http://127.0.0.1:8080/assets/js/drafts.js GET",
+    "http://127.0.0.1:8080/assets/js/store.js GET",
+    "http://127.0.0.1:8080/assets/js/ui.js GET",
+    "http://127.0.0.1:8080/assets/js/heatmap.js GET",
+    "http://127.0.0.1:8080/assets/js/export.js GET",
+    "http://127.0.0.1:8080/assets/js/today.js GET",
+    "http://127.0.0.1:8080/assets/js/app.js GET",
+    "http://127.0.0.1:8080/favicon.ico GET",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password POST",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password OPTIONS",
+    "http://127.0.0.1:8080/favicon.ico GET",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password POST",
+    "https://umutubzcwwmmbxfjkyvj.supabase.co/auth/v1/token?grant_type=password OPTIONS"
+  ],
+  "test_biz_date": "2026-09-30",
+  "test_device_id": "mvp003-e2e-9mnrdwjb",
+  "timestamp": "2026-09-29T04:06:12.008Z"
+}

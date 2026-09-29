@@ -1,0 +1,27 @@
+PASS  core-rpc-ok  — days=30 2026-08-31..2026-09-29
+PASS  core-days-30  — days=30
+PASS  core-revision-string  — type=string
+PASS  core-next-cursor-null  — next_cursor=null
+
+[场景 1] 1280x900：形状 / 五态文字补充 / UI-Core 对账
+PASS  dom-cells-30  — cells=30
+PASS  dom-range-match  — hm-day-2026-08-31 .. hm-day-2026-09-29
+PASS  dom-today-marked  — today=1
+PASS  dom-all-aria  — 每格均有 aria-label 文字补充
+PASS  dom-legend-6  — legend=6
+PASS  dom-states-present  — {"hm-s-notstarted":21,"hm-s-empty":8,"hm-s-partial":1}
+PASS  dom-anchor-first  — 三锚点主轴在热力图之上
+PASS  reconcile-streak  — DOM=0 RPC=0
+PASS  reconcile-recording-rate  — DOM=5% RPC=5%
+PASS  reconcile-met-rate  — DOM=0% RPC=0%
+PASS  rates-separated  — 记录率=5% 达标率=0%（分离显示）
+PASS  viewport-1280-no-hscroll  — scrollW=1280
+
+[场景 2] 375x800：无横向滚动
+PASS  viewport-375-no-hscroll  — scrollW=375
+PASS  viewport-375-cells-30  — cells=30
+
+[场景 3] 320x700：无横向滚动
+PASS  viewport-320-no-hscroll  — scrollW=320
+
+19/19 PASS，0 FAIL → docs/planning/evidence/MVP-004/ui-e2e-results.json

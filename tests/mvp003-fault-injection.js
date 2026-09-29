@@ -87,14 +87,23 @@ class Cdp {
   }
 }
 
+// 测试基建修复（2026-09-29，MVP-006 复跑发现）：原固定 sleep 2000ms 后直连 CDP 并立即
+// evaluate，在多场景连续启停 Chrome 的负载下是竞态——Chrome 未起则 ECONNREFUSED，
+// 页面脚本链未加载完则 evaluate 抛异常（Error 对象被 returnByValue 序列化为 {}，
+// 表现为"登录失败: {}"）。改为：轮询 CDP /json 就绪（≤10s）+ 轮询页面脚本链就绪（≤15s）。
+// 断言与场景语义零改动（先例：--no-proxy-server、085bbb6 加载链修复）。
 async function launchChrome(url) {
   const port = 9222 + Math.floor(Math.random() * 1000);
+  // 独立 user-data-dir：①与日常 Chrome profile 隔离；②作为实例标记，
+  // 供 main() 退出前清扫孤儿（SIGKILL 主进程会孤儿化 renderer 等子进程，2026-09-29 实测）
+  const userDataDir = '/tmp/morrow-mvp003-' + port;
   const chrome = spawn(CHROME, [
     '--remote-debugging-port=' + port,
     '--headless=new',
     '--disable-gpu',
     '--no-sandbox',
     '--disable-dev-shm-usage',
+    '--user-data-dir=' + userDataDir,
     '--window-size=1280,900',
     // E2E 不依赖宿主机系统代理状态：系统代理开但代理客户端未运行时，
     // Chrome 走系统代理会导致 supabase.co 请求全部失败（2026-09-28 实测复现）。
@@ -102,24 +111,36 @@ async function launchChrome(url) {
     url,
   ]);
 
-  await new Promise((res) => setTimeout(res, 2000));
-
   const http = require('node:http');
-  const wsUrl = await new Promise((res, rej) => {
-    http.get(`http://127.0.0.1:${port}/json`, (resp) => {
-      let data = '';
-      resp.on('data', (chunk) => (data += chunk));
-      resp.on('end', () => {
-        try {
-          const targets = JSON.parse(data);
-          const page = targets.find((t) => t.type === 'page');
-          res(page.webSocketDebuggerUrl);
-        } catch (e) {
-          rej(e);
-        }
+
+  // 轮询 CDP /json 直到就绪（≤10s），替代固定 2s。
+  // 必须按 URL 匹配 page target：连得太早时 Chrome 尚未导航到目标 URL，
+  // /json 里的 page 还是 about:blank——裸 find(type==='page') 会连错页面，
+  // 在 about:blank 上 evaluate 永远等不到 window.Morrow（2026-09-29 实测）。
+  let wsUrl = null;
+  const cdpDeadline = Date.now() + 10000;
+  while (Date.now() < cdpDeadline) {
+    try {
+      wsUrl = await new Promise((res, rej) => {
+        http.get(`http://127.0.0.1:${port}/json`, (resp) => {
+          let data = '';
+          resp.on('data', (chunk) => (data += chunk));
+          resp.on('end', () => {
+            try {
+              const targets = JSON.parse(data);
+              const page = targets.find((t) => t.type === 'page' && t.url === url);
+              res(page ? page.webSocketDebuggerUrl : null);
+            } catch (e) { rej(e); }
+          });
+        }).on('error', rej);
       });
-    }).on('error', rej);
-  });
+      if (wsUrl) break;
+    } catch (_) { /* Chrome 未就绪，继续轮询 */ }
+    await new Promise((res) => setTimeout(res, 300));
+  }
+  if (!wsUrl) {
+    throw new Error('Chrome CDP 未在 10s 内就绪（port ' + port + '）');
+  }
 
   const cdp = new Cdp(wsUrl);
   await cdp.ready;
@@ -137,7 +158,64 @@ async function launchChrome(url) {
 
   await cdp.send('Network.enable');
 
+  // 轮询页面脚本链就绪：readyState complete + 本测试用到的 Morrow 模块全齐（≤15s）。
+  // 导航/加载中 evaluate 会失败，catch 后继续轮询。
+  const pageDeadline = Date.now() + 15000;
+  let pollCount = 0;
+  for (;;) {
+    const r = await cdp.send('Runtime.evaluate', {
+      expression: `(function(){
+        var m = window.Morrow;
+        return {
+          href: location.href,
+          readyState: document.readyState,
+          morrowKeys: m ? Object.keys(m).length : -1,
+          ready: !!(document.readyState === 'complete' && m && m.config && m.transport && m.drafts && m.store && m.app && m.ui)
+        };
+      })()`,
+      returnByValue: true,
+    }).catch((e) => ({ catchError: e.message }));
+    pollCount++;
+    if (r && r.result && r.result.value && r.result.value.ready === true) break;
+    if (pollCount <= 3 || pollCount % 10 === 0) {
+      console.log('[就绪轮询 debug#' + pollCount + ']', JSON.stringify(r).slice(0, 220));
+    }
+    if (Date.now() > pageDeadline) {
+      console.log('[就绪轮询 debug#last]', JSON.stringify(r).slice(0, 400));
+      throw new Error('页面脚本链 15s 内未就绪：' + url);
+    }
+    await new Promise((res) => setTimeout(res, 300));
+  }
+
   return { chrome, cdp, port };
+}
+
+// kill 后等进程真正退出：SIGTERM 4s 未退才 SIGKILL 兜底。
+// 2026-09-29 实测教训：①仅发 SIGTERM 不等退出，多次运行残留数十个 headless Chrome，
+// 其占用调试端口与新实例随机端口撞库后，CDP /json 连到残留旧页面（91 进程残留现场）；
+// ②SIGKILL 秒杀主进程反而孤儿化 renderer 等子进程——故兜底放宽到 4s，
+// 孤儿由 main() 退出前的标记清扫兜底。
+function killChrome(chrome) {
+  if (!chrome || chrome.exitCode !== null) return Promise.resolve();
+  return new Promise((res) => {
+    const killTimer = setTimeout(() => { try { chrome.kill('SIGKILL'); } catch (_) {} }, 4000);
+    const hardStop = setTimeout(res, 4500);
+    chrome.once('exit', () => { clearTimeout(killTimer); clearTimeout(hardStop); res(); });
+    try { chrome.kill(); } catch (_) { clearTimeout(killTimer); clearTimeout(hardStop); res(); }
+  });
+}
+
+// 退出前清扫：按 --user-data-dir 标记杀掉所有本测试的 Chrome 进程（含孤儿）并删临时目录
+function sweepChromeOrphans() {
+  try {
+    require('node:child_process').execSync(
+      "ps -eo pid,command | grep 'morrow-mvp003-' | grep -v grep | awk '{print $1}' | xargs kill -9",
+      { stdio: 'ignore' }
+    );
+  } catch (_) { /* 无残留或平台差异，忽略 */ }
+  try {
+    require('node:child_process').execSync('rm -rf /tmp/morrow-mvp003-*', { stdio: 'ignore' });
+  } catch (_) { /* 忽略 */ }
 }
 
 // 注入配置并登录
@@ -221,7 +299,7 @@ async function testSyncLabelsThreeStates() {
     record('sync-labels-three-states', false, '测试异常：' + err.message);
   } finally {
     if (cdp) cdp.close();
-    if (chrome) chrome.kill();
+    await killChrome(chrome);
   }
 }
 
@@ -319,7 +397,7 @@ async function testOfflineDraftRecovery() {
     record('offline-draft-recovery', false, '测试异常：' + err.message);
   } finally {
     if (cdp) cdp.close();
-    if (chrome) chrome.kill();
+    await killChrome(chrome);
   }
 }
 
@@ -370,7 +448,7 @@ async function testStaleReadNotOverwrite() {
     record('new-read-accepted', false, '测试异常：' + err.message);
   } finally {
     if (cdp) cdp.close();
-    if (chrome) chrome.kill();
+    await killChrome(chrome);
   }
 }
 
@@ -477,7 +555,7 @@ async function testCrossOwnerIsolation() {
     record('cross-owner-draft-isolation', false, '测试异常：' + err.message);
   } finally {
     if (cdp) cdp.close();
-    if (chrome) chrome.kill();
+    await killChrome(chrome);
   }
 }
 
@@ -521,7 +599,7 @@ async function testOnlineEventNoAutoWrite() {
     record('online-event-no-auto-write', false, '测试异常：' + err.message);
   } finally {
     if (cdp) cdp.close();
-    if (chrome) chrome.kill();
+    await killChrome(chrome);
   }
 }
 
@@ -551,7 +629,9 @@ async function main() {
     JSON.stringify(
       {
         results,
-        network: network.map(redact),
+        // 修复：原 network.map(redact) 把对象 String() 成 "[object Object]"，证据不可用；
+        // 改为逐条拼 url + method 后脱敏，能证明登录/RPC 请求真实发出
+        network: network.map(function (n) { return redact(n.url + ' ' + n.method); }),
         test_biz_date: TEST_BIZ_DATE,
         test_device_id: TEST_DEVICE_ID,
         timestamp: new Date().toISOString(),
@@ -566,12 +646,14 @@ async function main() {
   const passCount = results.filter((r) => r.pass).length;
   console.log(`\n通过 ${passCount}/${results.length}`);
   console.log(allPass ? 'ALL PASS' : 'SOME FAILED');
+  sweepChromeOrphans();
   process.exit(allPass ? 0 : 1);
 }
 
 if (require.main === module) {
   main().catch((err) => {
     console.error('FATAL', err);
+    sweepChromeOrphans();
     process.exit(1);
   });
 }

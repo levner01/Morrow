@@ -1,0 +1,53 @@
+PASS T-E6 RFC8785 向量 arrays
+PASS T-E6 RFC8785 向量 french
+PASS T-E6 RFC8785 向量 structures
+PASS T-E6 RFC8785 向量 unicode
+PASS T-E6 RFC8785 向量 values
+PASS T-E6 RFC8785 向量 weird
+PASS T-E6 负零
+PASS T-E6 1e30
+PASS T-E2b 超安全整数保留原始字符串
+PASS T-E2b 更大整数同样保真
+PASS T-E2b 安全整数仍为 number
+PASS T-E2b warning 记录
+PASS T-E2b 对照：JSON.parse 会破坏为 9007199254740992
+PASS T-E2b 端到端导出成功（含裸 BIGINT 行）
+PASS T-E2b 容器中 version 为字符串 "9007199254740993"
+PASS T-E2b round-trip 后仍为字符串
+PASS T-E1b 导出成功
+PASS T-E1b life_data 恰 3 次请求（500/500/1）
+PASS T-E1b 第 1 页无游标
+PASS T-E1b 第 2 页游标 id-000499
+PASS T-E1b 第 3 页游标 id-000999
+PASS T-E1b activity_log 21 次请求（20 满页 + 1 空页）
+PASS T-E1b counts.life_data=1001
+PASS T-E1b counts.activity_log=10000
+PASS T-E1b counts.agent_clients=1
+PASS T-E1b counts.workspace_settings=1
+PASS T-E1b 封闭集合空数组
+PASS T-E1b 无重复无丢失（行 id 唯一性抽验）
+PASS T-E3b 场景1 冲突后重试成功
+PASS T-E3b 场景1 state 读取 4 次（2 次尝试 × R0/R1）
+PASS T-E3b 场景1 成功包 revision=43（新值）
+PASS T-E3b 场景2 耗尽后失败
+PASS T-E3b 场景2 错误类型 export_conflict
+PASS T-E3b 场景2 state 读取 6 次（3 次尝试）
+PASS T-E5 敏感键名拒绝
+PASS T-E5 JWT 形态值拒绝
+PASS T-E5 sb_secret 形态值拒绝
+PASS T-E5 正常数据不误伤
+PASS T-E4 超 25MiB 拒绝
+PASS T-E4 错误文案含当前大小
+PASS T-E7a 导出成功
+PASS T-E7a schema_version=1
+PASS T-E7a exported_at ISO 格式
+PASS T-E7a app_version=发行标识
+PASS T-E7a workspace 三字段
+PASS T-E7a data 六集合
+PASS T-E7a integrity 三字段
+PASS T-E7a 文件名格式
+PASS T-E7a 独立 round-trip 哈希一致
+PASS T-E7a 返回值 data_sha256 一致
+PASS T-E7a bytes 与实际一致
+
+==== mvp005-export-pipeline: 51 passed, 0 failed ====
